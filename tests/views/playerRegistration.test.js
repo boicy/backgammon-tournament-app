@@ -11,12 +11,16 @@ const { mockState, mockStore, busHandlers, mockEventBus } = vi.hoisted(() => {
     players: [],
     games: [],
     standings: [],
+    schedule: null,
+    roster: [],
+    archive: [],
   };
   const mockStore = {
-    getState: vi.fn(() => ({ ...mockState, players: [...mockState.players] })),
+    getState: vi.fn(() => ({ ...mockState, players: [...mockState.players], roster: [...(mockState.roster || [])] })),
     addPlayer: vi.fn(),
     removePlayer: vi.fn(),
     resetTournament: vi.fn(),
+    endTournament: vi.fn(),
     initTournament: vi.fn(),
     enableRoundRobin: vi.fn(),
     disableRoundRobin: vi.fn(),

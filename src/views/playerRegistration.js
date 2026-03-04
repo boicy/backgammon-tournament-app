@@ -1,4 +1,4 @@
-import { getState, addPlayer, removePlayer, resetTournament, enableRoundRobin, disableRoundRobin } from '../store/store.js';
+import { getState, addPlayer, removePlayer, resetTournament, endTournament, enableRoundRobin, disableRoundRobin } from '../store/store.js';
 import { eventBus } from '../store/eventBus.js';
 import { escapeHtml } from '../utils.js';
 
@@ -47,9 +47,17 @@ let _playersChangedHandler = null;
 let _scheduleChangedHandler = null;
 
 export function render(container) {
-  const { players, schedule } = getState();
+  const { players, schedule, tournament, roster } = getState();
+  const tournamentNameHtml = tournament
+    ? `<p class="tournament-name">${escapeHtml(tournament.name)}</p>`
+    : '';
+  const rosterOptions = roster
+    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join('');
+
   container.innerHTML = `
     <section class="view view--players" aria-label="Player Registration">
+      ${tournamentNameHtml}
       <h2>Players</h2>
 
       <div class="player-list-wrapper">
@@ -70,7 +78,9 @@ export function render(container) {
               maxlength="50"
               autocomplete="off"
               aria-label="Player name"
+              list="roster-datalist"
             />
+            <datalist id="roster-datalist">${rosterOptions}</datalist>
           </div>
           <button type="submit" class="btn btn-primary" aria-label="Add player">Add Player</button>
         </div>
@@ -81,6 +91,9 @@ export function render(container) {
       </div>
 
       <div class="danger-zone">
+        <button class="btn btn-danger btn-sm" data-action="end-tournament" aria-label="End tournament and save to archive">
+          End Tournament
+        </button>
         <button class="btn btn-danger" data-action="reset-tournament" aria-label="Reset tournament">
           Reset Tournament
         </button>
@@ -107,9 +120,14 @@ export function onMount(container) {
   }
 
   function refreshList() {
-    const { players } = getState();
+    const { players, roster } = getState();
     const wrapper = container.querySelector('.player-list-wrapper');
     if (wrapper) wrapper.innerHTML = playerListHtml(players);
+    // Refresh datalist options when players change (new roster entries)
+    const datalist = container.querySelector('#roster-datalist');
+    if (datalist) {
+      datalist.innerHTML = roster.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+    }
   }
 
   function refreshRoundRobin() {
@@ -158,9 +176,17 @@ export function onMount(container) {
       }
     }
 
+    if (action === 'end-tournament') {
+      if (window.confirm('End this tournament and save it to the archive?')) {
+        endTournament();
+        window.location.hash = '#/start';
+      }
+    }
+
     if (action === 'reset-tournament') {
       if (window.confirm('Reset the tournament? All players and game results will be deleted.')) {
         resetTournament();
+        window.location.hash = '#/start';
       }
     }
   }
