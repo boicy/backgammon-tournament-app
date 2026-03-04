@@ -1,9 +1,15 @@
 import { test, expect } from './fixtures.js';
 
 test.beforeEach(async ({ page }) => {
-  // Clear localStorage before each test for a clean state
+  // Clear localStorage and seed an active tournament so the router guard
+  // does not redirect to #/start (the router guard is tested in us1 tests).
   await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem('backgammon:tournament', JSON.stringify({
+      id: 'smoke-tid', name: 'Smoke Test', date: new Date().toISOString(), status: 'active',
+    }));
+  });
   await page.reload();
 });
 
@@ -29,8 +35,11 @@ test('navigation links switch views', async ({ page }) => {
   await page.click('a[href="#/history"]');
   await expect(page.locator('h2')).toContainText('Game History');
 
+  await page.click('a[href="#/club"]');
+  await expect(page.locator('h2').first()).toContainText('All-Time');
+
   await page.click('a[href="#/players"]');
-  await expect(page.locator('h2')).toContainText('Players');
+  await expect(page.locator('.view--players h2')).toContainText('Players');
 });
 
 // ---------------------------------------------------------------------------

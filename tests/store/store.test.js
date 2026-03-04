@@ -369,6 +369,239 @@ describe('quota exceeded handling', () => {
 });
 
 // ---------------------------------------------------------------------------
+// loadFromStorage — archive and roster (T004)
+// ---------------------------------------------------------------------------
+
+describe('loadFromStorage — archive and roster', () => {
+  it('defaults archive to [] when backgammon:archive key is missing', () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'backgammon:tournament') return null;
+      if (key === 'backgammon:players') return null;
+      if (key === 'backgammon:games') return null;
+      return null;
+    });
+    store.loadFromStorage();
+    expect(store.getState().archive).toEqual([]);
+  });
+
+  it('defaults roster to [] when backgammon:roster key is missing', () => {
+    localStorageMock.getItem.mockImplementation(() => null);
+    store.loadFromStorage();
+    expect(store.getState().roster).toEqual([]);
+  });
+
+  it('getState returns archive and roster fields', () => {
+    store.resetForTesting();
+    const state = store.getState();
+    expect(state).toHaveProperty('archive');
+    expect(state).toHaveProperty('roster');
+    expect(Array.isArray(state.archive)).toBe(true);
+    expect(Array.isArray(state.roster)).toBe(true);
+  });
+
+  it('resetForTesting resets archive and roster to []', () => {
+    store.resetForTesting();
+    expect(store.getState().archive).toEqual([]);
+    expect(store.getState().roster).toEqual([]);
+  });
+
+  it('loads archive from backgammon:archive key', () => {
+    const snapshot = { id: 's1', name: 'Test', date: '2026-01-01T00:00:00.000Z',
+      archivedAt: 1000, players: [], games: [], finalStandings: [], winnerName: null, gameCount: 0 };
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'backgammon:archive') return JSON.stringify([snapshot]);
+      return null;
+    });
+    store.loadFromStorage();
+    expect(store.getState().archive).toHaveLength(1);
+    expect(store.getState().archive[0].name).toBe('Test');
+  });
+
+  it('loads roster from backgammon:roster key', () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'backgammon:roster') return JSON.stringify(['Alice', 'Bob']);
+      return null;
+    });
+    store.loadFromStorage();
+    expect(store.getState().roster).toEqual(['Alice', 'Bob']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// initTournament — name validation (T005)
+// ---------------------------------------------------------------------------
+
+describe('initTournament — name validation', () => {
+  it("throws Error('Tournament name is required') for empty string", () => {
+    expect(() => store.initTournament('')).toThrow('Tournament name is required');
+  });
+
+  it('throws for whitespace-only string', () => {
+    expect(() => store.initTournament('   ')).toThrow('Tournament name is required');
+  });
+
+  it('throws for name over 100 characters', () => {
+    expect(() => store.initTournament('a'.repeat(101))).toThrow('Tournament name too long');
+  });
+
+  it('does not throw for valid name', () => {
+    expect(() => store.initTournament('valid name')).not.toThrow();
+  });
+
+  it('accepts name of exactly 100 characters', () => {
+    expect(() => store.initTournament('a'.repeat(100))).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// endTournament (T014)
+// ---------------------------------------------------------------------------
+
+describe('endTournament', () => {
+  let alice, bob;
+
+  function setupTournamentWithGame() {
+    store.initTournament('Test');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    alice = players.find((p) => p.name === 'Alice');
+    bob = players.find((p) => p.name === 'Bob');
+    store.recordGame({ player1Id: alice.id, player2Id: bob.id, winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+  }
+
+  it('appends a snapshot to archive when tournament has 1+ players and 1+ games', () => {
+    setupTournamentWithGame();
+    store.endTournament();
+    expect(store.getState().archive).toHaveLength(1);
+    expect(store.getState().archive[0].name).toBe('Test');
+  });
+
+  it('persists archive to backgammon:archive in localStorage', () => {
+    setupTournamentWithGame();
+    localStorageMock.setItem.mockClear();
+    store.endTournament();
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('backgammon:archive', expect.any(String));
+  });
+
+  it('clears active tournament, players, games from state after archiving', () => {
+    setupTournamentWithGame();
+    store.endTournament();
+    const state = store.getState();
+    expect(state.tournament).toBeNull();
+    expect(state.players).toHaveLength(0);
+    expect(state.games).toHaveLength(0);
+  });
+
+  it('clears localStorage keys for active tournament', () => {
+    setupTournamentWithGame();
+    localStorageMock.removeItem.mockClear();
+    store.endTournament();
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:tournament');
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:players');
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:games');
+  });
+
+  it('discards without archiving when tournament has 0 games', () => {
+    store.initTournament('Empty');
+    store.addPlayer('Alice');
+    store.endTournament();
+    expect(store.getState().archive).toHaveLength(0);
+    expect(store.getState().tournament).toBeNull();
+  });
+
+  it('discards without archiving when tournament has 0 players', () => {
+    store.initTournament('No Players');
+    store.endTournament();
+    expect(store.getState().archive).toHaveLength(0);
+    expect(store.getState().tournament).toBeNull();
+  });
+
+  it('is safe to call when tournament is null', () => {
+    store.resetForTesting();
+    expect(() => store.endTournament()).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// initTournament — auto-archive (T014)
+// ---------------------------------------------------------------------------
+
+describe('initTournament — auto-archive', () => {
+  it('auto-archives the current tournament if it has players+games before creating new one', () => {
+    store.initTournament('First');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    const alice = players.find((p) => p.name === 'Alice');
+    const bob = players.find((p) => p.name === 'Bob');
+    store.recordGame({ player1Id: alice.id, player2Id: bob.id, winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+
+    store.initTournament('Second');
+    expect(store.getState().archive).toHaveLength(1);
+    expect(store.getState().archive[0].name).toBe('First');
+    expect(store.getState().tournament.name).toBe('Second');
+  });
+
+  it('does not auto-archive if active tournament has no players', () => {
+    store.initTournament('First');
+    store.initTournament('Second');
+    expect(store.getState().archive).toHaveLength(0);
+  });
+
+  it('does not auto-archive if active tournament has no games', () => {
+    store.initTournament('First');
+    store.addPlayer('Alice');
+    store.initTournament('Second');
+    expect(store.getState().archive).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// addPlayer — roster update (T026)
+// ---------------------------------------------------------------------------
+
+describe('addPlayer — roster update', () => {
+  beforeEach(() => { store.initTournament('Roster Test'); });
+
+  it('adds name to roster when roster is empty', () => {
+    store.addPlayer('Alice');
+    expect(store.getState().roster).toContain('Alice');
+  });
+
+  it('does not add duplicate name (same case)', () => {
+    store.addPlayer('Alice');
+    const countBefore = store.getState().roster.length;
+    store.initTournament('Second');
+    store.addPlayer('Alice');
+    expect(store.getState().roster.length).toBe(countBefore);
+  });
+
+  it('does not add duplicate name (different case — case-insensitive dedup)', () => {
+    store.addPlayer('Alice');
+    const countBefore = store.getState().roster.length;
+    store.initTournament('Second');
+    store.addPlayer('alice');
+    expect(store.getState().roster.length).toBe(countBefore);
+  });
+
+  it('persists roster to backgammon:roster', () => {
+    localStorageMock.setItem.mockClear();
+    store.addPlayer('Alice');
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('backgammon:roster', expect.any(String));
+  });
+
+  it('loadFromStorage restores roster from backgammon:roster', () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'backgammon:roster') return JSON.stringify(['Alice', 'Bob']);
+      return null;
+    });
+    store.loadFromStorage();
+    expect(store.getState().roster).toEqual(['Alice', 'Bob']);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Round-robin store actions (T032)
 // ---------------------------------------------------------------------------
 

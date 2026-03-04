@@ -778,6 +778,217 @@ select option {
   padding-top: var(--space-lg);
 }
 
+/* ===== Tournament Name Prompt (002) ===== */
+.name-prompt {
+  max-width: 480px;
+  margin: var(--space-2xl) auto;
+  padding: var(--space-xl);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-accent-border);
+  border-radius: var(--radius-lg);
+}
+
+.name-prompt h2 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-lg);
+}
+
+.name-prompt .form-row {
+  gap: var(--space-sm);
+}
+
+/* Tournament name heading on Players view */
+.tournament-name {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-accent-glow);
+  border-left: 2px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+/* ===== Club Tab (002) ===== */
+.club-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.club-note {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* All-Time leaderboard table */
+.all-time-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 280px;
+}
+
+.all-time-table th {
+  background-color: var(--color-surface-2);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.all-time-table th:nth-child(n+3) {
+  text-align: right;
+}
+
+.all-time-table td {
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
+
+.all-time-table td:nth-child(n+3) {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.all-time-table .rank-1 {
+  background-color: rgba(201, 162, 43, 0.06);
+}
+
+.all-time-table .wins-cell {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* Archive list */
+.archive-list {
+  list-style: none;
+}
+
+.archive-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  min-height: var(--touch-target);
+  cursor: pointer;
+  gap: var(--space-sm);
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.archive-item:hover {
+  border-color: var(--color-accent-border);
+  background-color: var(--color-surface-2);
+}
+
+.archive-item-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-item-meta {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.archive-item-games {
+  font-family: var(--font-mono);
+}
+
+/* Tournament detail (read-only) */
+.tournament-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.tournament-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.tournament-detail-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  flex: 1;
+}
+
+.tournament-detail-meta {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.section-heading {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
+}
+
+/* Games list inside detail view */
+.detail-games-list {
+  list-style: none;
+}
+
+.detail-game-item {
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.detail-game-winner {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
 /* ===== Responsive ===== */
 @media (min-width: 480px) {
   .app-header {

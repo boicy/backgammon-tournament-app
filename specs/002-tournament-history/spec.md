@@ -121,7 +121,7 @@ When setting up a new tournament, the organizer sees name suggestions from all p
 - **FR-007**: The past tournaments list MUST display all archived tournaments in reverse chronological order showing each tournament's name, date, and game count; tapping a tournament MUST show its final standings and full game history in a read-only view with no edit or delete controls.
 - **FR-008**: System MUST provide an All-Time leaderboard displaying each player's total tournament wins and cumulative match points across all tournaments (archived and active).
 - **FR-009**: System MUST rank players on the All-Time leaderboard by tournament wins descending; ties MUST be broken by cumulative match points descending.
-- **FR-010**: The All-Time leaderboard MUST reflect the current active tournament's in-progress results without requiring archiving first.
+- **FR-010**: The All-Time leaderboard MUST reflect the current active tournament's in-progress results without requiring archiving first (cumulative match points from the active tournament are included; tournament wins are only credited upon archiving).
 - **FR-015**: The "Club" tab MUST be visible in the navigation at all times. When no tournaments have been archived, the All-Time leaderboard MUST display current players with 0 wins and an explanatory note (e.g. "Complete your first tournament to start tracking wins").
 - **FR-011**: System MUST maintain a persistent player roster of all names used across all tournaments.
 - **FR-012**: System MUST display matching roster suggestions as the organizer types a player name when adding players to a tournament.

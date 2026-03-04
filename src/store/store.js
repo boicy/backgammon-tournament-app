@@ -3,12 +3,15 @@ import { createPlayer, validatePlayerName } from '../models/player.js';
 import { createGame } from '../models/game.js';
 import { deriveStandings } from '../models/standing.js';
 import { generateSchedule } from '../models/roundRobin.js';
+import { createSnapshot } from '../models/tournamentSnapshot.js';
 import { eventBus } from './eventBus.js';
 
 const KEYS = {
   tournament: 'backgammon:tournament',
   players: 'backgammon:players',
   games: 'backgammon:games',
+  archive: 'backgammon:archive',
+  roster: 'backgammon:roster',
 };
 
 let state = {
@@ -16,6 +19,8 @@ let state = {
   players: [],
   games: [],
   schedule: null,   // null = round-robin disabled; array = enabled
+  archive: [],
+  roster: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -47,6 +52,8 @@ export function getState() {
     games: [...state.games],
     standings: deriveStandings(state.players, state.games),
     schedule: state.schedule ? [...state.schedule] : null,
+    archive: [...state.archive],
+    roster: [...state.roster],
   };
 }
 
@@ -59,14 +66,18 @@ export function loadFromStorage() {
     const t = localStorage.getItem(KEYS.tournament);
     const p = localStorage.getItem(KEYS.players);
     const g = localStorage.getItem(KEYS.games);
+    const a = localStorage.getItem(KEYS.archive);
+    const r = localStorage.getItem(KEYS.roster);
     state = {
       tournament: t ? JSON.parse(t) : null,
       players: p ? JSON.parse(p) : [],
       games: g ? JSON.parse(g) : [],
       schedule: null,
+      archive: a ? JSON.parse(a) : [],
+      roster: r ? JSON.parse(r) : [],
     };
   } catch (_err) {
-    state = { tournament: null, players: [], games: [], schedule: null };
+    state = { tournament: null, players: [], games: [], schedule: null, archive: [], roster: [] };
   }
 }
 
@@ -75,7 +86,26 @@ export function loadFromStorage() {
 // ---------------------------------------------------------------------------
 
 export function resetForTesting() {
-  state = { tournament: null, players: [], games: [], schedule: null };
+  state = { tournament: null, players: [], games: [], schedule: null, archive: [], roster: [] };
+}
+
+// ---------------------------------------------------------------------------
+// Internal archive helper (used by endTournament and auto-archive in initTournament)
+// ---------------------------------------------------------------------------
+
+function _archiveCurrentTournament() {
+  const snapshot = createSnapshot(state.tournament, state.players, state.games);
+  state.archive = [...state.archive, snapshot];
+  persist(KEYS.archive, state.archive);
+  // Update roster with any new player names
+  for (const player of state.players) {
+    const normalised = player.name.trim().toLowerCase();
+    const alreadyInRoster = state.roster.some((n) => n.trim().toLowerCase() === normalised);
+    if (!alreadyInRoster) {
+      state.roster = [...state.roster, player.name];
+    }
+  }
+  persist(KEYS.roster, state.roster);
 }
 
 // ---------------------------------------------------------------------------
@@ -83,8 +113,18 @@ export function resetForTesting() {
 // ---------------------------------------------------------------------------
 
 export function initTournament(name) {
-  const tournament = createTournament(name);
-  state = { tournament, players: [], games: [], schedule: null };
+  const trimmed = (name ?? '').trim();
+  if (!trimmed) throw new Error('Tournament name is required');
+  if (trimmed.length > 100) throw new Error('Tournament name too long');
+
+  // Auto-archive current tournament if it has players AND games
+  if (state.tournament !== null && state.players.length >= 1 && state.games.length >= 1) {
+    _archiveCurrentTournament();
+    eventBus.emit('state:archive:changed');
+  }
+
+  const tournament = createTournament(trimmed);
+  state = { ...state, tournament, players: [], games: [], schedule: null };
   persistAll();
   eventBus.emit('state:reset');
 }
@@ -94,6 +134,15 @@ export function addPlayer(name) {
   const player = createPlayer(name, state.players);
   state.players = [...state.players, player];
   persist(KEYS.players, state.players);
+
+  // Update roster if name is new (case-insensitive dedup)
+  const normalised = player.name.trim().toLowerCase();
+  const alreadyInRoster = state.roster.some((n) => n.trim().toLowerCase() === normalised);
+  if (!alreadyInRoster) {
+    state.roster = [...state.roster, player.name];
+    persist(KEYS.roster, state.roster);
+  }
+
   eventBus.emit('state:players:changed', { players: state.players });
 }
 
@@ -130,8 +179,22 @@ export function deleteGame(gameId) {
   eventBus.emit('state:standings:changed', { standings: deriveStandings(state.players, state.games) });
 }
 
+export function endTournament() {
+  if (state.tournament !== null && state.players.length >= 1 && state.games.length >= 1) {
+    _archiveCurrentTournament();
+    eventBus.emit('state:archive:changed');
+  }
+
+  // Clear active tournament in all cases
+  state = { ...state, tournament: null, players: [], games: [], schedule: null };
+  localStorage.removeItem(KEYS.tournament);
+  localStorage.removeItem(KEYS.players);
+  localStorage.removeItem(KEYS.games);
+  eventBus.emit('state:reset');
+}
+
 export function resetTournament() {
-  state = { tournament: null, players: [], games: [], schedule: null };
+  state = { ...state, tournament: null, players: [], games: [], schedule: null };
   localStorage.removeItem(KEYS.tournament);
   localStorage.removeItem(KEYS.players);
   localStorage.removeItem(KEYS.games);
