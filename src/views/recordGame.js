@@ -136,6 +136,8 @@ function refreshWinnerSelect(container) {
 // View module
 // ---------------------------------------------------------------------------
 
+let _container = null;
+let _changeHandler = null;
 let _playersChangedHandler = null;
 
 export function render(container) {
@@ -153,18 +155,19 @@ export function onMount(container) {
     if (el) { el.textContent = ''; el.hidden = true; }
   }
 
-  // Cube toggle
-  container.addEventListener('change', (e) => {
+  _container = container;
+
+  // Cube toggle + player select changes
+  _changeHandler = (e) => {
     if (e.target.matches('[data-cube-toggle]')) {
       const cubeValuesEl = container.querySelector('[data-cube-values]');
       if (cubeValuesEl) cubeValuesEl.hidden = !e.target.checked;
     }
-
-    // Player selects — update winner dropdown
     if (e.target.matches('[data-player-select]')) {
       refreshWinnerSelect(container);
     }
-  });
+  };
+  container.addEventListener('change', _changeHandler);
 
   // Form submit
   const form = container.querySelector('#record-game-form');
@@ -231,6 +234,13 @@ export function onMount(container) {
 }
 
 export function onUnmount() {
+  if (_container) {
+    if (_changeHandler) {
+      _container.removeEventListener('change', _changeHandler);
+      _changeHandler = null;
+    }
+    _container = null;
+  }
   if (_playersChangedHandler) {
     eventBus.off('state:players:changed', _playersChangedHandler);
     eventBus.off('state:reset', _playersChangedHandler);

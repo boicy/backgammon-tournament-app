@@ -42,6 +42,7 @@ function roundRobinHtml(schedule) {
 // View
 // ---------------------------------------------------------------------------
 
+let _container = null;
 let _playersChangedHandler = null;
 let _scheduleChangedHandler = null;
 
@@ -135,6 +136,8 @@ export function onMount(container) {
     });
   }
 
+  _container = container;
+
   // Event delegation for buttons and toggles
   container.addEventListener('click', _handleClick);
   container.addEventListener('change', _handleChange);
@@ -190,6 +193,17 @@ export function onMount(container) {
 }
 
 export function onUnmount() {
+  if (_container) {
+    if (_container._handleClick) {
+      _container.removeEventListener('click', _container._handleClick);
+      _container._handleClick = null;
+    }
+    if (_container._handleChange) {
+      _container.removeEventListener('change', _container._handleChange);
+      _container._handleChange = null;
+    }
+    _container = null;
+  }
   if (_playersChangedHandler) {
     eventBus.off('state:players:changed', _playersChangedHandler);
     eventBus.off('state:reset', _playersChangedHandler);

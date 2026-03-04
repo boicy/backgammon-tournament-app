@@ -52,6 +52,7 @@ function listHtml(games, players) {
 // View
 // ---------------------------------------------------------------------------
 
+let _container = null;
 let _gamesChangedHandler = null;
 let _currentFilter = '';
 
@@ -140,6 +141,7 @@ export function onMount(container) {
     }
   }
 
+  _container = container;
   container._handleClick = _handleClick;
 
   // Subscribe to store events
@@ -149,6 +151,13 @@ export function onMount(container) {
 }
 
 export function onUnmount() {
+  if (_container) {
+    if (_container._handleClick) {
+      _container.removeEventListener('click', _container._handleClick);
+      _container._handleClick = null;
+    }
+    _container = null;
+  }
   if (_gamesChangedHandler) {
     eventBus.off('state:games:changed', _gamesChangedHandler);
     eventBus.off('state:reset', _gamesChangedHandler);
