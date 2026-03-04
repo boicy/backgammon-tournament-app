@@ -5,6 +5,14 @@
 **Status**: Draft
 **Input**: User description: "Named tournaments and history feature for the backgammon tournament tracker app. Each tournament gets a name. Past tournaments are archived when ended — via explicit End Tournament button or automatically when a new one starts. Past tournaments are viewable (read-only). A cross-tournament All-Time leaderboard shows tournament wins and cumulative match points per player. Persistent player roster with suggestions from previous tournaments."
 
+## Clarifications
+
+### Session 2026-03-04
+
+- Q: Where do the Archive and All-Time leaderboard live in the navigation? → A: One new "Club" tab combines both — All-Time leaderboard at the top, list of past tournaments below it.
+- Q: What happens to the existing "Reset Tournament" button? → A: Keep both — "End Tournament" archives and starts fresh; "Reset Tournament" retains its existing discard-without-archiving behaviour.
+- Q: Should the Club tab be visible before any tournaments have been archived? → A: Always visible — shows current standings with 0 wins and an explanatory note until the first tournament is archived.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Name and Start a Tournament (Priority: P1)
@@ -106,14 +114,15 @@ When setting up a new tournament, the organizer sees name suggestions from all p
 
 - **FR-001**: System MUST prompt the organizer to enter a tournament name when starting a new tournament; empty names MUST be rejected.
 - **FR-002**: System MUST display the active tournament's name prominently on the Players view.
-- **FR-003**: System MUST allow the organizer to end the active tournament via an explicit "End Tournament" action with a confirmation step, which archives it and prompts for a new tournament name.
+- **FR-003**: System MUST provide two distinct end-of-tournament actions on the Players view: (1) "End Tournament" — archives the tournament and prompts for a new tournament name; (2) "Reset Tournament" — discards all current data without archiving (existing behaviour, requires confirmation).
 - **FR-004**: System MUST automatically archive the active tournament when the organizer initiates a new tournament without explicitly ending the current one.
 - **FR-005**: System MUST persist archived tournaments so they survive page refresh and browser restart.
-- **FR-006**: System MUST provide an Archive view listing all past tournaments in reverse chronological order, showing each tournament's name, date, and game count.
-- **FR-007**: System MUST allow viewing the final standings and full game history of any archived tournament; archived data MUST be read-only with no edit or delete controls exposed.
+- **FR-006**: System MUST provide a "Club" tab containing two sections: (1) an All-Time leaderboard at the top, and (2) a list of past tournaments below it — both accessible from the single tab.
+- **FR-007**: The past tournaments list MUST display all archived tournaments in reverse chronological order showing each tournament's name, date, and game count; tapping a tournament MUST show its final standings and full game history in a read-only view with no edit or delete controls.
 - **FR-008**: System MUST provide an All-Time leaderboard displaying each player's total tournament wins and cumulative match points across all tournaments (archived and active).
 - **FR-009**: System MUST rank players on the All-Time leaderboard by tournament wins descending; ties MUST be broken by cumulative match points descending.
 - **FR-010**: The All-Time leaderboard MUST reflect the current active tournament's in-progress results without requiring archiving first.
+- **FR-015**: The "Club" tab MUST be visible in the navigation at all times. When no tournaments have been archived, the All-Time leaderboard MUST display current players with 0 wins and an explanatory note (e.g. "Complete your first tournament to start tracking wins").
 - **FR-011**: System MUST maintain a persistent player roster of all names used across all tournaments.
 - **FR-012**: System MUST display matching roster suggestions as the organizer types a player name when adding players to a tournament.
 - **FR-013**: New names not in the roster MUST be accepted and automatically added to the roster.
