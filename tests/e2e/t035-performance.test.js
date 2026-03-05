@@ -41,7 +41,7 @@ async function seedLargeArchive(page) {
       id: 'active', name: 'Active Night', date: new Date().toISOString(), status: 'active',
     }));
     localStorage.setItem('backgammon:players', '[]');
-    localStorage.setItem('backgammon:games', '[]');
+    localStorage.setItem('backgammon:matches', '[]');
   });
   await page.reload();
 }
@@ -61,7 +61,7 @@ test('T035 — Club tab renders 52 snapshots in <100ms', async ({ page }) => {
 
   // Navigate away, then measure second render (cached module = pure DOM work)
   await page.goto('/#/players');
-  await expect(page.locator('.view--players')).toBeVisible();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
 
   const renderMs = await page.evaluate(() =>
     new Promise((resolve) => {

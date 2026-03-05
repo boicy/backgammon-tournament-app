@@ -18,7 +18,12 @@ async function seedActive(page, withArchive = false) {
     }];
     localStorage.setItem('backgammon:tournament', JSON.stringify(tournament));
     localStorage.setItem('backgammon:players', JSON.stringify(players));
-    localStorage.setItem('backgammon:games', JSON.stringify(games));
+    const matches = [{
+      id: 'm1', player1Id: 'p1', player2Id: 'p2', targetScore: 7,
+      status: 'active', winnerId: null, startedAt: Date.now() - 1000, completedAt: null,
+      games,
+    }];
+    localStorage.setItem('backgammon:matches', JSON.stringify(matches));
     if (withArchive) {
       const archive = [{
         id: 'a1', name: 'Past Night', date: new Date(Date.now() - 86400000).toISOString(),
@@ -53,7 +58,7 @@ for (const [label, width, height] of [['mobile', 375, 812], ['tablet', 768, 1024
     test('players view — no horizontal scroll', async ({ page }) => {
       await seedActive(page);
       await page.goto('/#/players');
-      await expect(page.locator('.view--players')).toBeVisible();
+      await expect(page.locator('.view--match-hub')).toBeVisible();
       await expectNoHorizontalScroll(page);
     });
 
@@ -75,7 +80,7 @@ for (const [label, width, height] of [['mobile', 375, 812], ['tablet', 768, 1024
     test('add-player submit button meets 44px touch target', async ({ page }) => {
       await seedActive(page);
       await page.goto('/#/players');
-      await expect(page.locator('.view--players')).toBeVisible();
+      await expect(page.locator('.view--match-hub')).toBeVisible();
       const box = await page.locator('#add-player-form button[type="submit"]').boundingBox();
       expect(box.height).toBeGreaterThanOrEqual(44);
     });
@@ -83,7 +88,7 @@ for (const [label, width, height] of [['mobile', 375, 812], ['tablet', 768, 1024
     test('end-tournament button meets 44px touch target', async ({ page }) => {
       await seedActive(page);
       await page.goto('/#/players');
-      await expect(page.locator('.view--players')).toBeVisible();
+      await expect(page.locator('.view--match-hub')).toBeVisible();
       const box = await page.locator('[data-action="end-tournament"]').boundingBox();
       expect(box.height).toBeGreaterThanOrEqual(44);
     });

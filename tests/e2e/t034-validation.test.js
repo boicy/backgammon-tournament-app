@@ -5,7 +5,7 @@ async function startTournament(page, name) {
   await expect(page.locator('.name-prompt')).toBeVisible();
   await page.locator('.name-prompt input[type="text"]').fill(name);
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--players')).toBeVisible();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
 }
 
 async function addPlayer(page, name) {
@@ -15,13 +15,20 @@ async function addPlayer(page, name) {
 }
 
 async function recordGame(page, winnerName, loserName) {
-  await page.locator('a[href="#/record"]').click();
-  await expect(page.locator('.view--record')).toBeVisible();
-  await page.locator('select[data-player-select]').first().selectOption({ label: winnerName });
-  await page.locator('select[data-player-select]').nth(1).selectOption({ label: loserName });
-  await page.locator('select[data-winner-select]').selectOption({ label: winnerName });
-  await page.locator('button[type="submit"]').click();
-  await page.locator('a[href="#/players"]').click();
+  // Start a match with target=1 so it completes after one game
+  await page.locator('select[data-start-p1]').selectOption({ label: winnerName });
+  await page.locator('select[data-start-p2]').selectOption({ label: loserName });
+  await page.locator('input[data-start-target]').fill('1');
+  await page.locator('#start-match-form button[type="submit"]').click();
+  // Enter the match
+  await page.locator('.match-card--active button[data-action="enter-match"]').first().click();
+  await expect(page.locator('.view--match')).toBeVisible();
+  // Record one game
+  await page.locator('select[data-game-winner]').selectOption({ label: winnerName });
+  await page.locator('button[data-action="record-game"]').click();
+  // Navigate back to hub
+  await page.locator('[data-action="back-to-hub"]').click();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
 }
 
 async function endTournament(page) {
@@ -96,7 +103,7 @@ test('T034 — tied tournament wins ranked by higher cumulative match points', a
       id: 'tid', name: 'Night 3', date: new Date().toISOString(), status: 'active',
     }));
     localStorage.setItem('backgammon:players', '[]');
-    localStorage.setItem('backgammon:games', '[]');
+    localStorage.setItem('backgammon:matches', '[]');
   });
   await page.reload();
   await page.goto('/#/club');
@@ -146,12 +153,12 @@ test('T034 — datalist suggestion fills the input and submits correctly', async
       id: 'tid', name: 'Test Night', date: new Date().toISOString(), status: 'active',
     }));
     localStorage.setItem('backgammon:players', '[]');
-    localStorage.setItem('backgammon:games', '[]');
+    localStorage.setItem('backgammon:matches', '[]');
   });
   // Use full navigation (not hash-only) so main.js re-reads seeded localStorage into the store.
   // The router default-redirect logic will send empty-hash → /players when tournament exists.
   await page.goto('/');
-  await expect(page.locator('.view--players')).toBeVisible();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
 
   // Type partial name — browser autocomplete fills the rest via datalist
   await page.locator('#player-name-input').fill('Ali');
@@ -180,13 +187,13 @@ test('T034 — localStorage has correct keys after archiving a tournament', asyn
     roster: JSON.parse(localStorage.getItem('backgammon:roster') || '[]'),
     tournament: localStorage.getItem('backgammon:tournament'),
     players: localStorage.getItem('backgammon:players'),
-    games: localStorage.getItem('backgammon:games'),
+    matches: localStorage.getItem('backgammon:matches'),
   }));
 
   // Active tournament cleared
   expect(storage.tournament).toBeNull();
   expect(storage.players).toBeNull();
-  expect(storage.games).toBeNull();
+  expect(storage.matches).toBeNull();
 
   // Archive has 1 entry
   expect(storage.archive).toHaveLength(1);

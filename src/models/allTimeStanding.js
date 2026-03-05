@@ -1,15 +1,15 @@
-import { deriveStandings } from './standing.js';
+import { deriveMatchStandings } from './matchStanding.js';
 
 /**
  * Derives the cross-tournament All-Time leaderboard.
  *
- * @param {object[]} archive         - Array of TournamentSnapshot objects
+ * @param {object[]} archive           - Array of TournamentSnapshot objects
  * @param {object|null} activeTournament
  * @param {object[]} activePlayers
- * @param {object[]} activeGames
+ * @param {object[]} activeMatches     - Match objects from the active tournament
  * @returns {object[]} AllTimeStanding[] sorted by tournamentWins DESC, cumulativePoints DESC
  */
-export function deriveAllTimeStandings(archive, activeTournament, activePlayers, activeGames) {
+export function deriveAllTimeStandings(archive, activeTournament, activePlayers, activeMatches) {
   // Map: normalised name → accumulated stats
   const map = new Map();
 
@@ -43,7 +43,7 @@ export function deriveAllTimeStandings(archive, activeTournament, activePlayers,
 
   // Overlay active tournament in-progress results (points only, NOT wins)
   if (activeTournament !== null) {
-    const activeStandings = deriveStandings(activePlayers, activeGames);
+    const activeStandings = deriveMatchStandings(activePlayers, activeMatches ?? []);
     const activeAt = Date.now() + 1; // ensures active tournament counts as most recent
     for (const standing of activeStandings) {
       const e = entry(standing.name);

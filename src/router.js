@@ -1,12 +1,12 @@
 // Hash-based router.
-// Route format: #/players | #/record | #/leaderboard | #/history | #/start | #/club
+// Route format: #/players | #/match | #/leaderboard | #/history | #/start | #/club
 
 import { getState } from './store/store.js';
 
 const ROUTES = {
   '/start': () => import('./views/namePrompt.js'),
-  '/players': () => import('./views/playerRegistration.js'),
-  '/record': () => import('./views/recordGame.js'),
+  '/players': () => import('./views/matchHub.js'),
+  '/match': () => import('./views/matchDetail.js'),
   '/leaderboard': () => import('./views/leaderboard.js'),
   '/history': () => import('./views/gameHistory.js'),
   '/club': () => import('./views/club.js'),
@@ -47,6 +47,18 @@ async function navigate() {
   if (!UNGUARDED_ROUTES.has(path) && getState().tournament === null) {
     history.replaceState(null, '', '#/start');
     path = '/start';
+  }
+
+  // /match guard: if no selectedMatchId, redirect to /players
+  if (path === '/match' && getState().selectedMatchId === null) {
+    history.replaceState(null, '', '#/players');
+    path = '/players';
+  }
+
+  // /record is retired — redirect to /players
+  if (path === '/record') {
+    history.replaceState(null, '', '#/players');
+    path = '/players';
   }
 
   // Unmount the current view before navigating away

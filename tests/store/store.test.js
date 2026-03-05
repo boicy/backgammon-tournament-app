@@ -52,13 +52,13 @@ describe('initTournament', () => {
     expect(tournament.id).toMatch(/^[0-9a-f-]{36}$/i);
   });
 
-  it('clears any existing players and games', () => {
+  it('clears any existing players and matches', () => {
     store.initTournament('First');
     store.addPlayer('Alice');
     store.initTournament('Second');
     const state = store.getState();
     expect(state.players).toHaveLength(0);
-    expect(state.games).toHaveLength(0);
+    expect(state.matches).toHaveLength(0);
   });
 
   it('persists tournament to localStorage', () => {
@@ -131,20 +131,14 @@ describe('removePlayer', () => {
     expect(store.getState().players).toHaveLength(0);
   });
 
-  it('throws when removing a player who has recorded games', () => {
+  it('throws when removing a player who is in an active match', () => {
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
     const alice = players.find((p) => p.name === 'Alice');
     const bob = players.find((p) => p.name === 'Bob');
-    store.recordGame({
-      player1Id: alice.id,
-      player2Id: bob.id,
-      winnerId: alice.id,
-      resultType: 'standard',
-      cubeValue: 1,
-    });
-    expect(() => store.removePlayer(alice.id)).toThrow(/recorded games/i);
+    store.startMatch(alice.id, bob.id, 5);
+    expect(() => store.removePlayer(alice.id)).toThrow(/active match/i);
   });
 
   it('throws when the player does not exist', () => {
@@ -161,10 +155,10 @@ describe('removePlayer', () => {
 });
 
 // ---------------------------------------------------------------------------
-// recordGame
+// recordGame — RETIRED (replaced by startMatch + recordMatchGame in 003-match-mode)
 // ---------------------------------------------------------------------------
 
-describe('recordGame', () => {
+describe.skip('recordGame', () => {
   let alice, bob;
 
   beforeEach(() => {
@@ -237,10 +231,10 @@ describe('recordGame', () => {
 });
 
 // ---------------------------------------------------------------------------
-// deleteGame
+// deleteGame — RETIRED (replaced by abandonMatch in 003-match-mode)
 // ---------------------------------------------------------------------------
 
-describe('deleteGame', () => {
+describe.skip('deleteGame', () => {
   let alice, bob;
 
   beforeEach(() => {
@@ -296,7 +290,7 @@ describe('resetTournament', () => {
     const { players } = store.getState();
     const alice = players.find((p) => p.name === 'Alice');
     const bob = players.find((p) => p.name === 'Bob');
-    store.recordGame({ player1Id: alice.id, player2Id: bob.id, winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.startMatch(alice.id, bob.id, 5);
   });
 
   it('clears all in-memory state', () => {
@@ -304,7 +298,7 @@ describe('resetTournament', () => {
     const state = store.getState();
     expect(state.tournament).toBeNull();
     expect(state.players).toHaveLength(0);
-    expect(state.games).toHaveLength(0);
+    expect(state.matches).toHaveLength(0);
     expect(state.standings).toHaveLength(0);
   });
 
@@ -312,7 +306,7 @@ describe('resetTournament', () => {
     store.resetTournament();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:tournament');
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:players');
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:games');
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:matches');
   });
 });
 
@@ -325,14 +319,15 @@ describe('localStorage persistence', () => {
     // Seed localStorage directly as if a prior session saved data
     const tournament = { id: 'tid', name: 'Saved', date: new Date().toISOString(), status: 'active' };
     const players = [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }];
-    const games = [{
-      id: 'g1', player1Id: 'p1', player2Id: 'p2', winnerId: 'p1',
-      resultType: 'standard', cubeValue: 1, matchPoints: 1, timestamp: Date.now(), sequence: 1,
+    const matches = [{
+      id: 'm1', player1Id: 'p1', player2Id: 'p2', targetScore: 5,
+      status: 'complete', winnerId: 'p1', startedAt: Date.now(), completedAt: Date.now(),
+      games: [{ id: 'g1', winnerId: 'p1', matchPoints: 5 }],
     }];
     localStorageMock.getItem.mockImplementation((key) => {
       if (key === 'backgammon:tournament') return JSON.stringify(tournament);
       if (key === 'backgammon:players') return JSON.stringify(players);
-      if (key === 'backgammon:games') return JSON.stringify(games);
+      if (key === 'backgammon:matches') return JSON.stringify(matches);
       return null;
     });
 
@@ -341,9 +336,9 @@ describe('localStorage persistence', () => {
     const state = store.getState();
     expect(state.tournament.name).toBe('Saved');
     expect(state.players).toHaveLength(2);
-    expect(state.games).toHaveLength(1);
+    expect(state.matches).toHaveLength(1);
     expect(state.standings[0].name).toBe('Alice');
-    expect(state.standings[0].matchPoints).toBe(1);
+    expect(state.standings[0].matchPoints).toBe(5);
   });
 });
 
@@ -374,12 +369,7 @@ describe('quota exceeded handling', () => {
 
 describe('loadFromStorage — archive and roster', () => {
   it('defaults archive to [] when backgammon:archive key is missing', () => {
-    localStorageMock.getItem.mockImplementation((key) => {
-      if (key === 'backgammon:tournament') return null;
-      if (key === 'backgammon:players') return null;
-      if (key === 'backgammon:games') return null;
-      return null;
-    });
+    localStorageMock.getItem.mockImplementation(() => null);
     store.loadFromStorage();
     expect(store.getState().archive).toEqual([]);
   });
@@ -460,49 +450,51 @@ describe('initTournament — name validation', () => {
 describe('endTournament', () => {
   let alice, bob;
 
-  function setupTournamentWithGame() {
+  function setupTournamentWithMatch() {
     store.initTournament('Test');
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
     alice = players.find((p) => p.name === 'Alice');
     bob = players.find((p) => p.name === 'Bob');
-    store.recordGame({ player1Id: alice.id, player2Id: bob.id, winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.startMatch(alice.id, bob.id, 1);
+    const matchId = store.getState().matches[0].id;
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
   }
 
-  it('appends a snapshot to archive when tournament has 1+ players and 1+ games', () => {
-    setupTournamentWithGame();
+  it('appends a snapshot to archive when tournament has 1+ players and 1+ matches', () => {
+    setupTournamentWithMatch();
     store.endTournament();
     expect(store.getState().archive).toHaveLength(1);
     expect(store.getState().archive[0].name).toBe('Test');
   });
 
   it('persists archive to backgammon:archive in localStorage', () => {
-    setupTournamentWithGame();
+    setupTournamentWithMatch();
     localStorageMock.setItem.mockClear();
     store.endTournament();
     expect(localStorageMock.setItem).toHaveBeenCalledWith('backgammon:archive', expect.any(String));
   });
 
-  it('clears active tournament, players, games from state after archiving', () => {
-    setupTournamentWithGame();
+  it('clears active tournament, players, matches from state after archiving', () => {
+    setupTournamentWithMatch();
     store.endTournament();
     const state = store.getState();
     expect(state.tournament).toBeNull();
     expect(state.players).toHaveLength(0);
-    expect(state.games).toHaveLength(0);
+    expect(state.matches).toHaveLength(0);
   });
 
   it('clears localStorage keys for active tournament', () => {
-    setupTournamentWithGame();
+    setupTournamentWithMatch();
     localStorageMock.removeItem.mockClear();
     store.endTournament();
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:tournament');
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:players');
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:games');
+    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:matches');
   });
 
-  it('discards without archiving when tournament has 0 games', () => {
+  it('discards without archiving when tournament has 0 matches', () => {
     store.initTournament('Empty');
     store.addPlayer('Alice');
     store.endTournament();
@@ -528,14 +520,14 @@ describe('endTournament', () => {
 // ---------------------------------------------------------------------------
 
 describe('initTournament — auto-archive', () => {
-  it('auto-archives the current tournament if it has players+games before creating new one', () => {
+  it('auto-archives the current tournament if it has players+matches before creating new one', () => {
     store.initTournament('First');
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
     const alice = players.find((p) => p.name === 'Alice');
     const bob = players.find((p) => p.name === 'Bob');
-    store.recordGame({ player1Id: alice.id, player2Id: bob.id, winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.startMatch(alice.id, bob.id, 5);
 
     store.initTournament('Second');
     expect(store.getState().archive).toHaveLength(1);
@@ -549,7 +541,7 @@ describe('initTournament — auto-archive', () => {
     expect(store.getState().archive).toHaveLength(0);
   });
 
-  it('does not auto-archive if active tournament has no games', () => {
+  it('does not auto-archive if active tournament has no matches', () => {
     store.initTournament('First');
     store.addPlayer('Alice');
     store.initTournament('Second');
@@ -652,5 +644,340 @@ describe('getState includes schedule', () => {
   it('returns schedule: null when round-robin is not enabled', () => {
     store.initTournament('Test');
     expect(store.getState().schedule).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// startMatch (003-match-mode)
+// ---------------------------------------------------------------------------
+
+describe('startMatch', () => {
+  let alice, bob, charlie;
+
+  beforeEach(() => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    store.addPlayer('Charlie');
+    const { players } = store.getState();
+    alice = players.find((p) => p.name === 'Alice');
+    bob = players.find((p) => p.name === 'Bob');
+    charlie = players.find((p) => p.name === 'Charlie');
+  });
+
+  it('creates a match in active state with empty games array', () => {
+    store.startMatch(alice.id, bob.id, 7);
+    const { matches } = store.getState();
+    expect(matches).toHaveLength(1);
+    expect(matches[0].status).toBe('active');
+    expect(matches[0].games).toEqual([]);
+    expect(matches[0].targetScore).toBe(7);
+  });
+
+  it('assigns player IDs correctly', () => {
+    store.startMatch(alice.id, bob.id, 5);
+    const match = store.getState().matches[0];
+    expect(match.player1Id).toBe(alice.id);
+    expect(match.player2Id).toBe(bob.id);
+  });
+
+  it('persists matches to backgammon:matches', () => {
+    localStorageMock.setItem.mockClear();
+    store.startMatch(alice.id, bob.id, 5);
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('backgammon:matches', expect.any(String));
+  });
+
+  it('throws "Players must be different" when player1Id === player2Id', () => {
+    expect(() => store.startMatch(alice.id, alice.id, 5)).toThrow(/players must be different/i);
+  });
+
+  it('throws "Player not found" for unknown player1Id', () => {
+    expect(() => store.startMatch('unknown-id', bob.id, 5)).toThrow(/player not found/i);
+  });
+
+  it('throws "Player not found" for unknown player2Id', () => {
+    expect(() => store.startMatch(alice.id, 'unknown-id', 5)).toThrow(/player not found/i);
+  });
+
+  it('throws "Target score must be at least 1" for target = 0', () => {
+    expect(() => store.startMatch(alice.id, bob.id, 0)).toThrow(/target score must be at least 1/i);
+  });
+
+  it('throws "Player already in an active match" (FR-012) when player1 is in an active match', () => {
+    store.startMatch(alice.id, bob.id, 5);
+    expect(() => store.startMatch(alice.id, charlie.id, 5)).toThrow(/player already in an active match/i);
+  });
+
+  it('throws "Player already in an active match" (FR-012) when player2 is in an active match', () => {
+    store.startMatch(alice.id, bob.id, 5);
+    expect(() => store.startMatch(charlie.id, bob.id, 5)).toThrow(/player already in an active match/i);
+  });
+
+  it('allows starting a match for a player whose previous match is complete', () => {
+    store.startMatch(alice.id, bob.id, 1);
+    // Record a game to complete the match
+    store.recordMatchGame(store.getState().matches[0].id, {
+      winnerId: alice.id, resultType: 'standard', cubeValue: 1,
+    });
+    expect(() => store.startMatch(alice.id, charlie.id, 5)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// recordMatchGame (003-match-mode)
+// ---------------------------------------------------------------------------
+
+describe('recordMatchGame', () => {
+  let alice, bob, matchId;
+
+  beforeEach(() => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    alice = players.find((p) => p.name === 'Alice');
+    bob = players.find((p) => p.name === 'Bob');
+    store.startMatch(alice.id, bob.id, 5);
+    matchId = store.getState().matches[0].id;
+  });
+
+  it('adds a game to the match.games array', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    const match = store.getState().matches[0];
+    expect(match.games).toHaveLength(1);
+  });
+
+  it('correctly calculates matchPoints (gammon × 2 = 2)', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'gammon', cubeValue: 1 });
+    const game = store.getState().matches[0].games[0];
+    expect(game.matchPoints).toBe(2);
+  });
+
+  it('auto-completes the match when target is reached', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    const match = store.getState().matches[0];
+    expect(match.status).toBe('complete');
+    expect(match.winnerId).toBe(alice.id);
+    expect(match.completedAt).not.toBeNull();
+  });
+
+  it('throws "Match not found" for unknown matchId', () => {
+    expect(() => store.recordMatchGame('bad-id', { winnerId: alice.id, resultType: 'standard', cubeValue: 1 })).toThrow(/match not found/i);
+  });
+
+  it('throws "Match is not active" when recording into a completed match', () => {
+    // Complete the match
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 4 }); // 4 pts
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 }); // 5 pts total → complete
+    const completedMatchId = store.getState().matches[0].id;
+    expect(() => store.recordMatchGame(completedMatchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 })).toThrow(/match is not active/i);
+  });
+
+  it('persists matches to localStorage after game recorded', () => {
+    localStorageMock.setItem.mockClear();
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('backgammon:matches', expect.any(String));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// abandonMatch (003-match-mode)
+// ---------------------------------------------------------------------------
+
+describe('abandonMatch', () => {
+  let alice, bob, matchId;
+
+  beforeEach(() => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    alice = players.find((p) => p.name === 'Alice');
+    bob = players.find((p) => p.name === 'Bob');
+    store.startMatch(alice.id, bob.id, 5);
+    matchId = store.getState().matches[0].id;
+  });
+
+  it('sets match status to abandoned', () => {
+    store.abandonMatch(matchId);
+    expect(store.getState().matches[0].status).toBe('abandoned');
+  });
+
+  it('does not set a winner', () => {
+    store.abandonMatch(matchId);
+    expect(store.getState().matches[0].winnerId).toBeNull();
+  });
+
+  it('frees both players so they can start new matches', () => {
+    store.addPlayer('Charlie');
+    const charlie = store.getState().players.find((p) => p.name === 'Charlie');
+    store.abandonMatch(matchId);
+    expect(() => store.startMatch(alice.id, charlie.id, 5)).not.toThrow();
+  });
+
+  it('abandoned match is not counted in standings', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 2 });
+    store.abandonMatch(matchId);
+    const standings = store.getState().standings;
+    const aliceStanding = standings.find((s) => s.name === 'Alice');
+    expect(aliceStanding.wins).toBe(0);
+  });
+
+  it('throws "Match not found" for unknown matchId', () => {
+    expect(() => store.abandonMatch('bad-id')).toThrow(/match not found/i);
+  });
+
+  it('throws "Match is not active" when abandoning a completed match', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 4 });
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 }); // 5 pts → complete
+    expect(() => store.abandonMatch(matchId)).toThrow(/match is not active/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// selectMatch (003-match-mode)
+// ---------------------------------------------------------------------------
+
+describe('selectMatch', () => {
+  beforeEach(() => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    const alice = players[0];
+    const bob = players[1];
+    store.startMatch(alice.id, bob.id, 5);
+  });
+
+  it('sets selectedMatchId in state', () => {
+    const matchId = store.getState().matches[0].id;
+    store.selectMatch(matchId);
+    expect(store.getState().selectedMatchId).toBe(matchId);
+  });
+
+  it('clears selectedMatchId when called with null', () => {
+    const matchId = store.getState().matches[0].id;
+    store.selectMatch(matchId);
+    store.selectMatch(null);
+    expect(store.getState().selectedMatchId).toBeNull();
+  });
+
+  it('selectedMatchId is null by default', () => {
+    expect(store.getState().selectedMatchId).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getState — match-derived standings (003-match-mode)
+// ---------------------------------------------------------------------------
+
+describe('getState — match-derived standings', () => {
+  it('returns standings derived from match results', () => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    const alice = players.find((p) => p.name === 'Alice');
+    const bob = players.find((p) => p.name === 'Bob');
+    store.startMatch(alice.id, bob.id, 3);
+    const matchId = store.getState().matches[0].id;
+    // Alice wins match (3 points in one go)
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 2 });
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 }); // total 3 → complete
+    const standings = store.getState().standings;
+    expect(standings[0].name).toBe('Alice');
+    expect(standings[0].wins).toBe(1);
+  });
+
+  it('returns matches array in state', () => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    store.startMatch(players[0].id, players[1].id, 5);
+    expect(store.getState().matches).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// removePlayer — match-based guard (FR-009) (003-match-mode)
+// ---------------------------------------------------------------------------
+
+describe('removePlayer — match-based guard', () => {
+  let alice, bob;
+
+  beforeEach(() => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    alice = players.find((p) => p.name === 'Alice');
+    bob = players.find((p) => p.name === 'Bob');
+  });
+
+  it('throws "Cannot remove a player with an active match" when player is in active match', () => {
+    store.startMatch(alice.id, bob.id, 5);
+    expect(() => store.removePlayer(alice.id)).toThrow(/cannot remove a player with an active match/i);
+  });
+
+  it('allows removal when player has no active matches', () => {
+    store.addPlayer('Charlie');
+    const charlie = store.getState().players.find((p) => p.name === 'Charlie');
+    expect(() => store.removePlayer(charlie.id)).not.toThrow();
+  });
+
+  it('allows removal when player\'s only match is complete', () => {
+    store.startMatch(alice.id, bob.id, 1);
+    const matchId = store.getState().matches[0].id;
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    expect(() => store.removePlayer(bob.id)).not.toThrow();
+  });
+
+  it('allows removal when player\'s only match is abandoned', () => {
+    store.startMatch(alice.id, bob.id, 5);
+    const matchId = store.getState().matches[0].id;
+    store.abandonMatch(matchId);
+    expect(() => store.removePlayer(alice.id)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// endTournament — archives from matches (003-match-mode)
+// ---------------------------------------------------------------------------
+
+describe('endTournament — match-based archiving', () => {
+  it('archives tournament when it has players and at least one match', () => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    const alice = players.find((p) => p.name === 'Alice');
+    const bob = players.find((p) => p.name === 'Bob');
+    store.startMatch(alice.id, bob.id, 1);
+    const matchId = store.getState().matches[0].id;
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.endTournament();
+    expect(store.getState().archive).toHaveLength(1);
+  });
+
+  it('does not archive when tournament has no matches', () => {
+    store.initTournament('Empty Night');
+    store.addPlayer('Alice');
+    store.endTournament();
+    expect(store.getState().archive).toHaveLength(0);
+  });
+
+  it('clears matches from state after ending', () => {
+    store.initTournament('Match Night');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    store.startMatch(players[0].id, players[1].id, 5);
+    store.endTournament();
+    expect(store.getState().matches).toHaveLength(0);
   });
 });

@@ -1,19 +1,23 @@
-import { deriveStandings } from './standing.js';
+import { deriveMatchStandings } from './matchStanding.js';
 
 /**
- * Creates an immutable snapshot of a completed tournament.
- * Caller must ensure players.length >= 1 and games.length >= 1.
+ * Creates an immutable snapshot of a completed tournament (match-mode).
+ * Caller must ensure players.length >= 1 and matches.length >= 1.
  *
  * @param {object} tournament
  * @param {object[]} players
- * @param {object[]} games
+ * @param {object[]} matches  - array of Match objects (complete or abandoned)
  * @returns {object} TournamentSnapshot
  */
-export function createSnapshot(tournament, players, games) {
+export function createSnapshot(tournament, players, matches) {
   const playersCopy = JSON.parse(JSON.stringify(players));
-  const gamesCopy = JSON.parse(JSON.stringify(games));
-  const finalStandings = deriveStandings(playersCopy, gamesCopy);
-  const winnerName = finalStandings.length > 0 ? finalStandings[0].name : null;
+  const matchesCopy = JSON.parse(JSON.stringify(matches));
+
+  const finalStandings = deriveMatchStandings(playersCopy, matchesCopy);
+  // Only credit a winner if someone actually won at least one match
+  const topStanding = finalStandings.length > 0 ? finalStandings[0] : null;
+  const winnerName = topStanding && topStanding.wins > 0 ? topStanding.name : null;
+  const gameCount = matchesCopy.reduce((sum, m) => sum + (m.games ? m.games.length : 0), 0);
 
   return {
     id: tournament.id,
@@ -21,10 +25,10 @@ export function createSnapshot(tournament, players, games) {
     date: tournament.date,
     archivedAt: Date.now(),
     players: playersCopy,
-    games: gamesCopy,
+    matches: matchesCopy,
     finalStandings,
     winnerName,
-    gameCount: games.length,
+    gameCount,
   };
 }
 
