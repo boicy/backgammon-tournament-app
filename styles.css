@@ -989,6 +989,221 @@ select option {
   color: var(--color-accent);
 }
 
+/* ===== Match Hub (003) ===== */
+.hub-columns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.hub-col {
+  min-width: 0;
+}
+
+.match-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  min-height: var(--touch-target);
+  transition: border-color var(--transition);
+}
+
+.match-card--active {
+  border-left: 3px solid var(--color-accent);
+  background-color: var(--color-accent-glow);
+}
+
+.match-card--complete {
+  border-left: 3px solid var(--color-complete);
+  background-color: rgba(77, 140, 84, 0.04);
+}
+
+.match-card__players {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+.match-card__score {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.completed-matches-section {
+  margin-bottom: var(--space-md);
+}
+
+.start-match-form {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-accent-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.badge-active {
+  background-color: rgba(196, 136, 42, 0.15);
+  color: var(--color-warning);
+}
+
+.badge-winner {
+  background-color: rgba(77, 140, 84, 0.15);
+  color: var(--color-complete);
+}
+
+/* ===== Match Detail (003) ===== */
+.match-header {
+  margin-bottom: var(--space-lg);
+}
+
+.match-header h2 {
+  margin-bottom: var(--space-sm);
+}
+
+.match-scores {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+}
+
+.score-display {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.target-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.match-complete-banner {
+  background-color: rgba(77, 140, 84, 0.1);
+  border: 1px solid var(--color-complete);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  color: var(--color-complete);
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.match-complete-banner strong {
+  color: var(--color-accent);
+}
+
+.game-form {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-accent-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.game-log {
+  margin-top: var(--space-lg);
+}
+
+.game-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.game-log-table th {
+  background-color: var(--color-surface-2);
+  padding: var(--space-xs) var(--space-sm);
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.game-log-table td {
+  padding: var(--space-xs) var(--space-sm);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.game-log-table td:first-child {
+  font-family: var(--font-mono);
+  color: var(--color-text-dim);
+  width: 2rem;
+}
+
+.game-log-table td:last-child {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-accent);
+  text-align: right;
+}
+
+/* ===== Game History match grouping (003) ===== */
+.match-group {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  overflow: hidden;
+}
+
+.match-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.match-group-players {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.match-group-target {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ===== Club detail match list (003) ===== */
+.detail-match-item {
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.detail-match-winner {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
 /* ===== Responsive ===== */
 @media (min-width: 480px) {
   .app-header {
@@ -1011,5 +1226,19 @@ select option {
 
   .form-row {
     flex-wrap: nowrap;
+  }
+
+  .hub-columns {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-xl);
+  }
+
+  .hub-col--players {
+    flex: 0 0 260px;
+  }
+
+  .hub-col--matches {
+    flex: 1;
   }
 }

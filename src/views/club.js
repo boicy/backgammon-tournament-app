@@ -25,8 +25,8 @@ function formatDate(isoString) {
   }
 }
 
-function allTimeTableHtml(archive, tournament, players, games) {
-  const standings = deriveAllTimeStandings(archive, tournament, players, games);
+function allTimeTableHtml(archive, tournament, players, matches) {
+  const standings = deriveAllTimeStandings(archive, tournament, players, matches);
 
   if (standings.length === 0) {
     return `<p class="club-note">No players yet.</p>`;
@@ -94,9 +94,34 @@ function snapshotDetailHtml(snapshot) {
       <td>${s.losses}</td>
     </tr>`).join('');
 
-  const gamesHtml = snapshot.games.length === 0
-    ? '<p class="club-note">No games recorded.</p>'
-    : `<ul class="detail-games-list">
+  // Support both match-based (003+) and legacy (game-list) snapshots
+  let gamesHtml;
+  if (snapshot.matches && snapshot.matches.length > 0) {
+    // Match-based snapshot
+    gamesHtml = snapshot.matches.map((m) => {
+      const p1 = snapshot.players.find((p) => p.id === m.player1Id);
+      const p2 = snapshot.players.find((p) => p.id === m.player2Id);
+      const winner = m.winnerId ? snapshot.players.find((p) => p.id === m.winnerId) : null;
+      const statusLabel = m.status === 'complete' ? `${escapeHtml(winner?.name ?? '?')} wins` : m.status;
+      const gameRows = (m.games || []).map((g) => {
+        const gWinner = snapshot.players.find((p) => p.id === g.winnerId);
+        const gLoserId = g.player1Id === g.winnerId ? g.player2Id : g.player1Id;
+        const gLoser = snapshot.players.find((p) => p.id === gLoserId);
+        return `<li class="detail-game-item">
+          <span class="detail-game-winner">${escapeHtml(gWinner?.name ?? '?')}</span>
+          beat ${escapeHtml(gLoser?.name ?? '?')}
+          — ${escapeHtml(g.resultType)} × ${g.cubeValue} = <strong>${g.matchPoints} pts</strong>
+        </li>`;
+      }).join('');
+      return `<div class="detail-match-item">
+        <strong>${escapeHtml(p1?.name ?? '?')} vs ${escapeHtml(p2?.name ?? '?')}</strong>
+        — ${statusLabel}
+        ${gameRows ? `<ul class="detail-games-list">${gameRows}</ul>` : ''}
+      </div>`;
+    }).join('');
+  } else if (snapshot.games && snapshot.games.length > 0) {
+    // Legacy snapshot with top-level games array
+    gamesHtml = `<ul class="detail-games-list">
       ${snapshot.games.map((g) => {
         const winner = snapshot.players.find((p) => p.id === g.winnerId);
         const loserId = g.player1Id === g.winnerId ? g.player2Id : g.player1Id;
@@ -108,6 +133,9 @@ function snapshotDetailHtml(snapshot) {
         </li>`;
       }).join('')}
     </ul>`;
+  } else {
+    gamesHtml = '<p class="club-note">No games recorded.</p>';
+  }
 
   return `
     <div class="tournament-detail">
@@ -143,7 +171,7 @@ function snapshotDetailHtml(snapshot) {
 // ---------------------------------------------------------------------------
 
 export function render(container) {
-  const { archive, tournament, players, games } = getState();
+  const { archive, tournament, players, matches } = getState();
 
   if (_selectedSnapshotId) {
     const snapshot = archive.find((s) => s.id === _selectedSnapshotId);
@@ -164,7 +192,7 @@ export function render(container) {
         <div>
           <h2>All-Time Standings</h2>
           <div class="all-time-section" data-testid="all-time-section">
-            ${allTimeTableHtml(archive, tournament, players, games)}
+            ${allTimeTableHtml(archive, tournament, players, matches)}
           </div>
         </div>
 
@@ -195,8 +223,8 @@ export function onMount(container) {
     if (!_selectedSnapshotId) {
       const allTimeSection = container.querySelector('.all-time-section');
       if (allTimeSection) {
-        const { archive, tournament, players, games } = getState();
-        allTimeSection.innerHTML = allTimeTableHtml(archive, tournament, players, games);
+        const { archive, tournament, players, matches } = getState();
+        allTimeSection.innerHTML = allTimeTableHtml(archive, tournament, players, matches);
       }
     }
   };

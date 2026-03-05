@@ -17,17 +17,14 @@ test.beforeEach(async ({ page }) => {
 // Navigation
 // ---------------------------------------------------------------------------
 
-test('loads and shows the Players view by default', async ({ page }) => {
+test('loads and shows the Match Hub view by default', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/#\/players/);
-  await expect(page.locator('h2')).toContainText('Players');
+  await expect(page.locator('.view--match-hub h2')).toContainText('Match Hub');
 });
 
 test('navigation links switch views', async ({ page }) => {
   await page.goto('/');
-
-  await page.click('a[href="#/record"]');
-  await expect(page.locator('h2')).toContainText('Record Game');
 
   await page.click('a[href="#/leaderboard"]');
   await expect(page.locator('h2')).toContainText('Leaderboard');
@@ -39,11 +36,11 @@ test('navigation links switch views', async ({ page }) => {
   await expect(page.locator('h2').first()).toContainText('All-Time');
 
   await page.click('a[href="#/players"]');
-  await expect(page.locator('.view--players h2')).toContainText('Players');
+  await expect(page.locator('.view--match-hub h2')).toContainText('Match Hub');
 });
 
 // ---------------------------------------------------------------------------
-// US1: Player Registration
+// Player Management
 // ---------------------------------------------------------------------------
 
 test('can add a player', async ({ page }) => {
@@ -62,7 +59,7 @@ test('shows error for duplicate player name', async ({ page }) => {
   await expect(page.locator('[data-error]')).toBeVisible();
 });
 
-test('can remove a player with no games', async ({ page }) => {
+test('can remove a player with no matches', async ({ page }) => {
   await page.goto('/#/players');
   await page.fill('input[type="text"]', 'Alice');
   await page.click('button[type="submit"]');
@@ -75,7 +72,7 @@ test('players persist after page reload', async ({ page }) => {
   await page.fill('input[type="text"]', 'Alice');
   await page.click('button[type="submit"]');
   await page.fill('input[type="text"]', 'Bob');
-  await page.click('button[type="submit"]');
+  await page.locator('#add-player-form button[type="submit"]').click();
 
   await page.reload();
   await expect(page.locator('.player-list')).toContainText('Alice');
@@ -83,12 +80,11 @@ test('players persist after page reload', async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// US2: Record Game
+// Match Recording (Match Mode)
 // ---------------------------------------------------------------------------
 
-test.describe('Record Game', () => {
+test.describe('Match Mode', () => {
   test.beforeEach(async ({ page }) => {
-    // Set up two players via localStorage for speed
     await page.goto('/');
     await page.evaluate(() => {
       const tournament = { id: 'tid', name: 'Test', date: new Date().toISOString(), status: 'active' };
@@ -98,53 +94,45 @@ test.describe('Record Game', () => {
       ];
       localStorage.setItem('backgammon:tournament', JSON.stringify(tournament));
       localStorage.setItem('backgammon:players', JSON.stringify(players));
-      localStorage.setItem('backgammon:games', '[]');
+      localStorage.setItem('backgammon:matches', '[]');
     });
-    // Reload so loadFromStorage() picks up the seeded data, then navigate via hash
     await page.reload();
-    await page.goto('/#/record');
+    await page.goto('/#/players');
   });
 
-  test('shows player dropdowns populated from state', async ({ page }) => {
-    // <option> elements inside a closed <select> are not "visible" in Playwright;
-    // use toContainText on the <select> itself to verify options are present.
-    const p1Select = page.locator('select[data-player-select]').first();
-    await expect(p1Select).toContainText('Alice');
-    await expect(p1Select).toContainText('Bob');
-  });
-
-  test('records a standard game and awards 1 match point', async ({ page }) => {
-    // Each <select data-player-select> lives in its own <div>, so :nth-of-type
-    // won't cross parent boundaries — use Playwright's .nth() instead.
-    await page.locator('select[data-player-select]').first().selectOption('p1');
-    await page.locator('select[data-player-select]').nth(1).selectOption('p2');
-    await page.selectOption('select[data-winner-select]', 'p1');
-
-    await page.click('button[type="submit"]');
-
-    // Navigate to leaderboard and verify Alice has 1 pt
-    await page.click('a[href="#/leaderboard"]');
-    const aliceRow = page.locator('tbody tr', { hasText: 'Alice' });
-    await expect(aliceRow.locator('.pts-cell')).toContainText('1');
+  test('can start a match between two players', async ({ page }) => {
+    await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
+    await page.locator('select[data-start-p2]').selectOption({ label: 'Bob' });
+    await page.locator('#start-match-form button[type="submit"]').click();
+    await expect(page.locator('.match-card--active')).toBeVisible();
+    await expect(page.locator('.match-card--active')).toContainText('Alice');
+    await expect(page.locator('.match-card--active')).toContainText('Bob');
   });
 
   test('shows error when same player selected for both roles', async ({ page }) => {
-    await page.locator('select[data-player-select]').first().selectOption('p1');
-    await page.locator('select[data-player-select]').nth(1).selectOption('p1');
-    await page.click('button[type="submit"]');
-    await expect(page.locator('[data-error]')).toBeVisible();
+    await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
+    await page.locator('select[data-start-p2]').selectOption({ label: 'Alice' });
+    await page.locator('#start-match-form button[type="submit"]').click();
+    await expect(page.locator('[data-match-error]')).toBeVisible();
   });
 
-  test('cube value selector appears when toggle is enabled', async ({ page }) => {
-    await expect(page.locator('[data-cube-values]')).toBeHidden();
-    // The checkbox input is visually hidden by CSS; click its visible label instead.
-    await page.click('label[for="cube-toggle"]');
-    await expect(page.locator('[data-cube-values]')).toBeVisible();
+  test('records a game and score updates in match detail', async ({ page }) => {
+    await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
+    await page.locator('select[data-start-p2]').selectOption({ label: 'Bob' });
+    await page.locator('#start-match-form button[type="submit"]').click();
+    await page.locator('.match-card--active button[data-action="enter-match"]').first().click();
+    await expect(page.locator('.view--match')).toBeVisible();
+
+    await page.locator('select[data-game-winner]').selectOption({ label: 'Alice' });
+    await page.locator('button[data-action="record-game"]').click();
+
+    // Alice's score should be 1 (standard × cube 1 = 1 pt)
+    await expect(page.locator('[data-testid="score-p1"]')).toContainText('1');
   });
 });
 
 // ---------------------------------------------------------------------------
-// US3: Leaderboard
+// Leaderboard
 // ---------------------------------------------------------------------------
 
 test.describe('Leaderboard', () => {
@@ -153,16 +141,20 @@ test.describe('Leaderboard', () => {
     await page.evaluate(() => {
       const tournament = { id: 'tid', name: 'Test', date: new Date().toISOString(), status: 'active' };
       const players = [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }];
-      const games = [{
-        id: 'g1', player1Id: 'p1', player2Id: 'p2', winnerId: 'p1',
-        resultType: 'gammon', cubeValue: 4, matchPoints: 8,
-        timestamp: Date.now(), sequence: 1,
+      const matches = [{
+        id: 'm1', player1Id: 'p1', player2Id: 'p2', targetScore: 8,
+        status: 'complete', winnerId: 'p1',
+        startedAt: Date.now() - 1000, completedAt: Date.now(),
+        games: [{
+          id: 'g1', player1Id: 'p1', player2Id: 'p2', winnerId: 'p1',
+          resultType: 'gammon', cubeValue: 4, matchPoints: 8,
+          timestamp: Date.now(), sequence: 1,
+        }],
       }];
       localStorage.setItem('backgammon:tournament', JSON.stringify(tournament));
       localStorage.setItem('backgammon:players', JSON.stringify(players));
-      localStorage.setItem('backgammon:games', JSON.stringify(games));
+      localStorage.setItem('backgammon:matches', JSON.stringify(matches));
     });
-    // Reload so loadFromStorage() picks up the seeded data, then navigate via hash
     await page.reload();
     await page.goto('/#/leaderboard');
   });
@@ -179,7 +171,7 @@ test.describe('Leaderboard', () => {
 });
 
 // ---------------------------------------------------------------------------
-// US4: Game History
+// Game History
 // ---------------------------------------------------------------------------
 
 test.describe('Game History', () => {
@@ -188,39 +180,32 @@ test.describe('Game History', () => {
     await page.evaluate(() => {
       const tournament = { id: 'tid', name: 'Test', date: new Date().toISOString(), status: 'active' };
       const players = [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }];
-      const games = [{
-        id: 'g1', player1Id: 'p1', player2Id: 'p2', winnerId: 'p1',
-        resultType: 'gammon', cubeValue: 4, matchPoints: 8,
-        timestamp: Date.now(), sequence: 1,
+      const matches = [{
+        id: 'm1', player1Id: 'p1', player2Id: 'p2', targetScore: 7,
+        status: 'active', winnerId: null,
+        startedAt: Date.now() - 1000, completedAt: null,
+        games: [{
+          id: 'g1', player1Id: 'p1', player2Id: 'p2', winnerId: 'p1',
+          resultType: 'gammon', cubeValue: 4, matchPoints: 8,
+          timestamp: Date.now(), sequence: 1,
+        }],
       }];
       localStorage.setItem('backgammon:tournament', JSON.stringify(tournament));
       localStorage.setItem('backgammon:players', JSON.stringify(players));
-      localStorage.setItem('backgammon:games', JSON.stringify(games));
+      localStorage.setItem('backgammon:matches', JSON.stringify(matches));
     });
-    // Reload so loadFromStorage() picks up the seeded data, then navigate via hash
     await page.reload();
     await page.goto('/#/history');
   });
 
-  test('shows game entry with match points', async ({ page }) => {
-    await expect(page.locator('[data-game-id]')).toContainText('8 pts');
+  test('shows match group with game entry', async ({ page }) => {
+    await expect(page.locator('.match-group')).toBeVisible();
+    await expect(page.locator('.history-item')).toBeVisible();
+    await expect(page.locator('.history-item')).toContainText('8');
   });
 
-  test('expands to show score breakdown on click', async ({ page }) => {
-    await expect(page.locator('[data-breakdown]')).toBeHidden();
-    await page.click('[data-summary]');
-    await expect(page.locator('[data-breakdown]')).toBeVisible();
-    await expect(page.locator('[data-breakdown]')).toContainText('Gammon × 4 = 8 pts');
-  });
-
-  test('filter hides non-matching games', async ({ page }) => {
-    await page.fill('[data-filter-input]', 'Charlie');
-    await expect(page.locator('[data-game-id]')).toBeHidden();
-  });
-
-  test('delete game removes it from history', async ({ page }) => {
-    page.on('dialog', (dialog) => dialog.accept());
-    await page.click('[data-action="delete-game"]');
-    await expect(page.locator('[data-game-id]')).not.toBeVisible();
+  test('shows player names in match group header', async ({ page }) => {
+    await expect(page.locator('.match-group-header')).toContainText('Alice');
+    await expect(page.locator('.match-group-header')).toContainText('Bob');
   });
 });

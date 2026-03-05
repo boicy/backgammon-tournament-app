@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 async function startTournament(page, name) {
   await page.locator('.name-prompt input[type="text"]').fill(name);
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--players')).toBeVisible();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
 }
 
 async function addPlayer(page, name) {
@@ -20,13 +20,20 @@ async function endTournament(page) {
 }
 
 async function recordOneGame(page, winnerName, loserName) {
-  await page.locator('a[href="#/record"]').click();
-  await expect(page.locator('.view--record')).toBeVisible();
-  await page.locator('select[data-player-select]').first().selectOption({ label: winnerName });
-  await page.locator('select[data-player-select]').nth(1).selectOption({ label: loserName });
-  await page.locator('select[data-winner-select]').selectOption({ label: winnerName });
-  await page.locator('button[type="submit"]').click();
-  await page.locator('a[href="#/players"]').click();
+  // Start a match with target=1 so it completes after one game
+  await page.locator('select[data-start-p1]').selectOption({ label: winnerName });
+  await page.locator('select[data-start-p2]').selectOption({ label: loserName });
+  await page.locator('input[data-start-target]').fill('1');
+  await page.locator('#start-match-form button[type="submit"]').click();
+  // Enter the match
+  await page.locator('.match-card--active button[data-action="enter-match"]').first().click();
+  await expect(page.locator('.view--match')).toBeVisible();
+  // Record one game
+  await page.locator('select[data-game-winner]').selectOption({ label: winnerName });
+  await page.locator('button[data-action="record-game"]').click();
+  // Navigate back to hub
+  await page.locator('[data-action="back-to-hub"]').click();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
 }
 
 async function archiveTournament(page, name) {
@@ -83,7 +90,7 @@ test('AC4 — detail view has no Add Player, Record Game, or Delete controls', a
 
   await expect(page.locator('[data-action="remove-player"]')).toHaveCount(0);
   await expect(page.locator('[data-action="delete-game"]')).toHaveCount(0);
-  await expect(page.locator('a[href="#/record"]')).toBeVisible(); // nav exists but no form in detail
+  await expect(page.locator('a[href="#/players"]')).toBeVisible(); // Tonight nav link exists
   await expect(page.locator('#add-player-form')).toHaveCount(0);
 });
 

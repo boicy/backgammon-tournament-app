@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 test('SC1 — fresh app with no localStorage shows name prompt, not player list', async ({ page }) => {
   await expect(page.locator('.name-prompt')).toBeVisible();
-  await expect(page.locator('.view--players')).not.toBeVisible();
+  await expect(page.locator('.view--match-hub')).not.toBeVisible();
 });
 
 test('SC2 — submitting empty name shows validation error and stays on prompt', async ({ page }) => {
@@ -21,18 +21,18 @@ test('SC2 — submitting empty name shows validation error and stays on prompt',
   await expect(page.locator('.name-prompt')).toBeVisible();
 });
 
-test('SC3 — entering valid name navigates to Players view with name visible', async ({ page }) => {
+test('SC3 — entering valid name navigates to Match Hub with name visible', async ({ page }) => {
   await page.locator('.name-prompt input[type="text"]').fill('April Club Night');
   await page.locator('.name-prompt button[type="submit"]').click();
 
-  await expect(page.locator('.view--players')).toBeVisible();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
   await expect(page.locator('.tournament-name')).toContainText('April Club Night');
 });
 
 test('SC4 — refreshing after naming preserves tournament name', async ({ page }) => {
   await page.locator('.name-prompt input[type="text"]').fill('Persistent Tournament');
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--players')).toBeVisible();
+  await expect(page.locator('.view--match-hub')).toBeVisible();
 
   await page.reload();
   await expect(page.locator('.tournament-name')).toContainText('Persistent Tournament');
