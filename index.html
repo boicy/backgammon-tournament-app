@@ -5,20 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Backgammon Tournament Tracker</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-has-tournament="false">
   <header class="app-header">
     <h1 class="app-title">Backgammon</h1>
-    <nav class="app-nav" aria-label="Main navigation">
-      <a href="#/players" class="nav-link" aria-label="Tonight">Tonight</a>
-      <a href="#/leaderboard" class="nav-link" aria-label="Leaderboard">Standings</a>
-      <a href="#/history" class="nav-link" aria-label="Game History">History</a>
-      <a href="#/club" class="nav-link" aria-label="Club and History">Club</a>
+    <nav class="app-tabs" aria-label="Main navigation">
+      <a href="#/live" class="nav-link" aria-label="Live matches">Live</a>
+      <a href="#/leaderboard" class="nav-link" aria-label="Standings">Standings</a>
     </nav>
+    <div class="hamburger-menu-wrapper">
+      <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">☰</button>
+      <div class="hamburger-menu" id="hamburger-menu" role="menu">
+        <a href="#/history" class="menu-item" role="menuitem">History</a>
+        <a href="#/club" class="menu-item" role="menuitem">Club</a>
+        <div class="hamburger-menu-divider" id="menu-divider-tournament"></div>
+        <button class="menu-item menu-item-danger" id="menu-end-tournament" data-action="end-tournament" role="menuitem">End Tournament</button>
+        <button class="menu-item menu-item-danger" id="menu-reset-tournament" data-action="reset-tournament" role="menuitem">Reset Tournament</button>
+      </div>
+    </div>
   </header>
   <main id="app" role="main">
     <!-- Views render here -->

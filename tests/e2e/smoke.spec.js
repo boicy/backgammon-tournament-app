@@ -17,10 +17,10 @@ test.beforeEach(async ({ page }) => {
 // Navigation
 // ---------------------------------------------------------------------------
 
-test('loads and shows the Match Hub view by default', async ({ page }) => {
+test('loads and shows the Live view by default', async ({ page }) => {
   await page.goto('/');
-  await expect(page).toHaveURL(/#\/players/);
-  await expect(page.locator('.view--match-hub h2')).toContainText('Match Hub');
+  await expect(page).toHaveURL(/#\/live/);
+  await expect(page.locator('.view--live')).toBeVisible();
 });
 
 test('navigation links switch views', async ({ page }) => {
@@ -29,14 +29,17 @@ test('navigation links switch views', async ({ page }) => {
   await page.click('a[href="#/leaderboard"]');
   await expect(page.locator('h2')).toContainText('Leaderboard');
 
-  await page.click('a[href="#/history"]');
+  // History and Club are in the hamburger menu
+  await page.locator('#hamburger-btn').click();
+  await page.locator('a[href="#/history"]').click();
   await expect(page.locator('h2')).toContainText('Game History');
 
-  await page.click('a[href="#/club"]');
+  await page.locator('#hamburger-btn').click();
+  await page.locator('a[href="#/club"]').click();
   await expect(page.locator('h2').first()).toContainText('All-Time');
 
-  await page.click('a[href="#/players"]');
-  await expect(page.locator('.view--match-hub h2')).toContainText('Match Hub');
+  await page.click('a[href="#/live"]');
+  await expect(page.locator('.view--live')).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -44,39 +47,60 @@ test('navigation links switch views', async ({ page }) => {
 // ---------------------------------------------------------------------------
 
 test('can add a player', async ({ page }) => {
-  await page.goto('/#/players');
-  await page.fill('input[type="text"]', 'Alice');
-  await page.click('button[type="submit"]');
-  await expect(page.locator('.player-list')).toContainText('Alice');
+  await page.goto('/#/live');
+  await page.locator('[data-action="toggle-add-player"]').click();
+  await page.locator('#player-name-input').fill('Alice');
+  await page.locator('#add-player-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
+  // Expand roster to verify player appears
+  await page.locator('[data-action="toggle-roster"]').click();
+  await expect(page.locator('.live-roster')).toContainText('Alice');
 });
 
 test('shows error for duplicate player name', async ({ page }) => {
-  await page.goto('/#/players');
-  await page.fill('input[type="text"]', 'Alice');
-  await page.click('button[type="submit"]');
-  await page.fill('input[type="text"]', 'Alice');
-  await page.click('button[type="submit"]');
+  await page.goto('/#/live');
+  // Add Alice once
+  await page.locator('[data-action="toggle-add-player"]').click();
+  await page.locator('#player-name-input').fill('Alice');
+  await page.locator('#add-player-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
+  // Try to add Alice again (form should re-open after collapse, or toggle again)
+  await page.locator('[data-action="toggle-add-player"]').click();
+  await page.locator('#player-name-input').fill('Alice');
+  await page.locator('#add-player-form button[type="submit"]').click();
   await expect(page.locator('[data-error]')).toBeVisible();
 });
 
 test('can remove a player with no matches', async ({ page }) => {
-  await page.goto('/#/players');
-  await page.fill('input[type="text"]', 'Alice');
-  await page.click('button[type="submit"]');
-  await page.click('[data-action="remove-player"]');
-  await expect(page.locator('.player-list')).not.toBeVisible();
+  await page.goto('/#/live');
+  await page.locator('[data-action="toggle-add-player"]').click();
+  await page.locator('#player-name-input').fill('Alice');
+  await page.locator('#add-player-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
+  // Expand roster to see remove button
+  await page.locator('[data-action="toggle-roster"]').click();
+  await page.locator('[data-action="remove-player"]').click();
+  await page.waitForTimeout(50);
+  // Count should drop to 0
+  await expect(page.locator('[data-action="toggle-roster"]')).toContainText('0 player');
 });
 
 test('players persist after page reload', async ({ page }) => {
-  await page.goto('/#/players');
-  await page.fill('input[type="text"]', 'Alice');
-  await page.click('button[type="submit"]');
-  await page.fill('input[type="text"]', 'Bob');
+  await page.goto('/#/live');
+  await page.locator('[data-action="toggle-add-player"]').click();
+  await page.locator('#player-name-input').fill('Alice');
   await page.locator('#add-player-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
+  await page.locator('[data-action="toggle-add-player"]').click();
+  await page.locator('#player-name-input').fill('Bob');
+  await page.locator('#add-player-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
 
   await page.reload();
-  await expect(page.locator('.player-list')).toContainText('Alice');
-  await expect(page.locator('.player-list')).toContainText('Bob');
+  // Expand roster to verify persistence
+  await page.locator('[data-action="toggle-roster"]').click();
+  await expect(page.locator('.live-roster')).toContainText('Alice');
+  await expect(page.locator('.live-roster')).toContainText('Bob');
 });
 
 // ---------------------------------------------------------------------------
@@ -97,37 +121,42 @@ test.describe('Match Mode', () => {
       localStorage.setItem('backgammon:matches', '[]');
     });
     await page.reload();
-    await page.goto('/#/players');
+    await page.goto('/#/live');
   });
 
   test('can start a match between two players', async ({ page }) => {
+    await page.locator('[data-action="toggle-new-match"]').click();
     await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
     await page.locator('select[data-start-p2]').selectOption({ label: 'Bob' });
     await page.locator('#start-match-form button[type="submit"]').click();
-    await expect(page.locator('.match-card--active')).toBeVisible();
-    await expect(page.locator('.match-card--active')).toContainText('Alice');
-    await expect(page.locator('.match-card--active')).toContainText('Bob');
+    await expect(page.locator('.live-card--active')).toBeVisible();
+    await expect(page.locator('.live-card--active')).toContainText('Alice');
+    await expect(page.locator('.live-card--active')).toContainText('Bob');
   });
 
   test('shows error when same player selected for both roles', async ({ page }) => {
+    await page.locator('[data-action="toggle-new-match"]').click();
     await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
     await page.locator('select[data-start-p2]').selectOption({ label: 'Alice' });
     await page.locator('#start-match-form button[type="submit"]').click();
     await expect(page.locator('[data-match-error]')).toBeVisible();
   });
 
-  test('records a game and score updates in match detail', async ({ page }) => {
+  test('records a game and score updates inline on the card', async ({ page }) => {
+    await page.locator('[data-action="toggle-new-match"]').click();
     await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
     await page.locator('select[data-start-p2]').selectOption({ label: 'Bob' });
     await page.locator('#start-match-form button[type="submit"]').click();
-    await page.locator('.match-card--active button[data-action="enter-match"]').first().click();
-    await expect(page.locator('.view--match')).toBeVisible();
+    await page.waitForTimeout(50);
 
-    await page.locator('select[data-game-winner]').selectOption({ label: 'Alice' });
-    await page.locator('button[data-action="record-game"]').click();
+    const card = page.locator('.live-card--active').first();
+    await card.locator('[data-action="record-game"]').click();
+    await card.locator('[data-game-winner]').selectOption({ label: 'Alice' });
+    await card.locator('[data-action="submit-game"]').click();
+    await page.waitForTimeout(50);
 
     // Alice's score should be 1 (standard × cube 1 = 1 pt)
-    await expect(page.locator('[data-testid="score-p1"]')).toContainText('1');
+    await expect(page.locator('[data-score-p1]')).toContainText('1');
   });
 });
 

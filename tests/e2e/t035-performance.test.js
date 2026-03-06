@@ -60,8 +60,8 @@ test('T035 — Club tab renders 52 snapshots in <100ms', async ({ page }) => {
   await expect(page.locator('.view--club')).toBeVisible();
 
   // Navigate away, then measure second render (cached module = pure DOM work)
-  await page.goto('/#/players');
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await page.goto('/#/live');
+  await expect(page.locator('.view--live')).toBeVisible();
 
   const renderMs = await page.evaluate(() =>
     new Promise((resolve) => {

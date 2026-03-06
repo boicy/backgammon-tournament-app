@@ -21,9 +21,9 @@
 
 **Purpose**: New design system foundation and route restructuring
 
-- [ ] T001 Rewrite `styles.css` with new design system tokens: color palette (#0f0f0f base, #f5a623 amber accent, #34d399 success, #ef4444 danger), system font stack, monospace score font, spacing scale, 8px border-radius, 44px touch targets, card shadows, left-edge accent bars, expand/collapse transition (max-height 200ms ease-out), score-pulse keyframes animation
-- [ ] T002 Update `index.html` header markup: replace 4 nav links with 2 tabs ("Live", "Standings") + ☰ menu button (top-right). Add hamburger menu dropdown container (hidden by default) with: History link, Club link, divider, End Tournament button, Reset Tournament button. Conditionally show/hide tabs based on tournament state via a `data-has-tournament` attribute on body or header
-- [ ] T003 Update `src/router.js`: rename `#/players` route to `#/live` (pointing to liveView), remove `#/match` route, add redirect from `#/match` → `#/live` and `#/players` → `#/live`. Update default route logic. Add hamburger menu open/close handler (click ☰ toggles, click outside closes, nav click closes)
+- [X] T001 Rewrite `styles.css` with new design system tokens: color palette (#0f0f0f base, #f5a623 amber accent, #34d399 success, #ef4444 danger), system font stack, monospace score font, spacing scale, 8px border-radius, 44px touch targets, card shadows, left-edge accent bars, expand/collapse transition (max-height 200ms ease-out), score-pulse keyframes animation
+- [X] T002 Update `index.html` header markup: replace 4 nav links with 2 tabs ("Live", "Standings") + ☰ menu button (top-right). Add hamburger menu dropdown container (hidden by default) with: History link, Club link, divider, End Tournament button, Reset Tournament button. Conditionally show/hide tabs based on tournament state via a `data-has-tournament` attribute on body or header
+- [X] T003 Update `src/router.js`: rename `#/players` route to `#/live` (pointing to liveView), remove `#/match` route, add redirect from `#/match` → `#/live` and `#/players` → `#/live`. Update default route logic. (Hamburger menu behavior is implemented in T014, not here)
 
 **Checkpoint**: App renders with new visual system, 2-tab nav works, routes updated. Existing views may look broken (expected — they'll be restyled in later phases).
 
@@ -35,8 +35,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Write unit tests for liveView match card HTML rendering in `tests/views/liveView.test.js`: test that `renderMatchCard(match, players)` returns correct HTML with player names, score, target, game count, "Record Game" button, and "⋯" overflow button. Test collapsed and expanded card states. Test completed card rendering (winner, green accent). Observe tests FAIL
-- [ ] T005 Create `src/views/liveView.js` with basic structure: export `render(container)`, `onMount(container)`, `onUnmount()`. Implement `renderMatchCard()` helper for active match cards (player names left/right, large monospace score centered, "of N" target, "Game X" count, Record Game button, ⋯ overflow). Implement `renderCompletedCard()` for completed matches (muted, green bar, winner name). Wire `render()` to output tournament header zone + active cards zone + new match zone + completed zone. Make T004 tests PASS
+- [X] T004 Write unit tests for liveView match card HTML rendering in `tests/views/liveView.test.js`: test that `renderMatchCard(match, players)` returns correct HTML with player names, score, target, game count, "Record Game" button, and "⋯" overflow button. Test collapsed and expanded card states. Test completed card rendering (winner, green accent). Observe tests FAIL
+- [X] T005 Create `src/views/liveView.js` with basic structure: export `render(container)`, `onMount(container)`, `onUnmount()`. Implement `renderMatchCard()` helper for active match cards (player names left/right, large monospace score centered, "of N" target, "Game X" count, Record Game button, ⋯ overflow). Implement `renderCompletedCard()` for completed matches (muted, green bar, winner name). Wire `render()` to output tournament header zone + active cards zone + new match zone + completed zone. Make T004 tests PASS
 
 ---
 
@@ -52,12 +52,12 @@
 
 ### Tests for US1 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T006 [US1] Write Playwright e2e tests in `tests/e2e/us1-live-monitoring.test.js`: AC1 — create tournament, start 2 matches, verify both match cards visible at 375px without scrolling. AC2 — verify score is the largest element on card (check font-size). AC3 — verify empty state shows "＋ New Match" button when no active matches. Observe tests FAIL
+- [X] T006 [US1] Write Playwright e2e tests in `tests/e2e/us1-live-monitoring.test.js`: AC1 — create tournament, start 2 matches, verify both match cards visible at 375px without scrolling. AC2 — verify score is the largest element on card (check font-size). AC3 — verify empty state shows "＋ New Match" button when no active matches. Observe tests FAIL
 
 ### Implementation for US1
 
-- [ ] T007 [US1] Wire liveView into router and event bus in `src/views/liveView.js`: subscribe to `state:matches:changed`, `state:players:changed`, `state:reset` in `onMount()`. On state change, re-render active match cards zone (targeted DOM update, not full innerHTML replacement). Ensure match cards are compact enough that 2–3 fit at 375px without scrolling — tune card padding, font sizes, margins in `styles.css`
-- [ ] T008 [US1] Add empty state handling in `src/views/liveView.js`: when no active matches, show centered message with "＋ New Match" button. Verify no horizontal scroll at 375px and 320px. Run US1 e2e tests via Playwright MCP — all PASS
+- [X] T007 [US1] Wire liveView into router and event bus in `src/views/liveView.js`: subscribe to `state:matches:changed`, `state:players:changed`, `state:reset` in `onMount()`. On state change, re-render active match cards zone (targeted DOM update, not full innerHTML replacement). Note: preserve-expanded-state logic (`_expandedCardId` guard) is introduced in T011 — do NOT implement it here; leave a TODO comment in the re-render function as a placeholder. Ensure match cards are compact enough that 2–3 fit at 375px without scrolling — tune card padding, font sizes, margins in `styles.css`
+- [X] T008 [US1] Add empty state handling in `src/views/liveView.js`: when no active matches, show centered message with "＋ New Match" button. Verify no horizontal scroll at 375px and 320px. Run US1 e2e tests via Playwright MCP — all PASS
 
 **Checkpoint**: Live view shows active matches with large scores. 2–3 cards fit on a phone screen. No interactivity beyond viewing.
 
@@ -71,13 +71,13 @@
 
 ### Tests for US2 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T009 [P] [US2] Write unit tests for expand/collapse logic in `tests/views/liveView.test.js`: test `_expandedCardId` tracking — expanding card A sets ID, expanding card B collapses A and sets B, collapsing sets null. Test that `renderMatchCard()` with expanded=true includes inline form HTML (winner select, result select, cube select, submit button). Observe tests FAIL
-- [ ] T010 [P] [US2] Write Playwright e2e tests in `tests/e2e/us2-inline-recording.test.js`: AC1 — tap Record Game, verify inline form appears within card. AC2 — submit game, verify score updates and form collapses with pulse animation. AC3 — toggle Record Game off, verify form collapses without recording. AC4 — record game that completes match, verify card transitions to complete state. Observe tests FAIL
+- [X] T009 [P] [US2] Write unit tests for expand/collapse logic in `tests/views/liveView.test.js`: test `_expandedCardId` tracking — expanding card A sets ID, expanding card B collapses A and sets B, collapsing sets null. Test that `renderMatchCard()` with expanded=true includes inline form HTML (winner select, result select, cube select, submit button). Observe tests FAIL
+- [X] T010 [P] [US2] Write Playwright e2e tests in `tests/e2e/us2-inline-recording.test.js`: AC1 — tap Record Game, verify inline form appears within card. AC2 — submit game, verify score updates and form collapses with pulse animation. AC3 — toggle Record Game off, verify form collapses without recording. AC4 — record game that completes match, verify card transitions to complete state. AC5 (edge case) — expand card A's form, then record a game on card B (via a separate action that triggers state:matches:changed), verify card A's form remains open with updated score. Observe tests FAIL
 
 ### Implementation for US2
 
-- [ ] T011 [US2] Implement expand/collapse logic in `src/views/liveView.js`: add module-level `_expandedCardId` variable. On "Record Game" click, toggle expand state — if same card, collapse; if different card, collapse previous and expand new. Render inline form (winner select, result type select, cube value select, Submit button) inside the card when expanded. Use CSS max-height transition for smooth expand/collapse (FR-023). Make T009 unit tests PASS
-- [ ] T012 [US2] Implement game recording in `src/views/liveView.js`: on form submit, call `recordMatchGame(matchId, {winnerId, resultType, cubeValue})`. After recording: collapse form (`_expandedCardId = null`), add `score-updated` CSS class to trigger pulse animation (FR-024), remove class on `animationend`. Handle match completion: card re-renders as completed and moves to completed section. Implement single-form constraint (FR-008). Make T010 e2e tests PASS via Playwright MCP
+- [X] T011 [US2] Implement expand/collapse logic in `src/views/liveView.js`: add module-level `_expandedCardId` variable. On "Record Game" click, toggle expand state — if same card, collapse; if different card, collapse previous and expand new. Add document-level click listener: if a click target is not inside the expanded card (`!card.contains(event.target)`), collapse the form (`_expandedCardId = null`, re-render). Render inline form (winner select, result type select, cube value select, Submit button) inside the card when expanded. Use CSS max-height transition for smooth expand/collapse (FR-023). Make T009 unit tests PASS
+- [X] T012 [US2] Implement game recording in `src/views/liveView.js`: on form submit, call `recordMatchGame(matchId, {winnerId, resultType, cubeValue})`. After recording: collapse form (`_expandedCardId = null`), add `score-updated` CSS class to trigger pulse animation (FR-024), remove class on `animationend`. Handle match completion: card re-renders as completed and moves to completed section. Implement single-form constraint (FR-008). Make T010 e2e tests PASS via Playwright MCP
 
 **Checkpoint**: Full game recording workflow works inline. Director never leaves the Live view.
 
@@ -91,12 +91,12 @@
 
 ### Tests for US3 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T013 [US3] Write Playwright e2e tests in `tests/e2e/us3-navigation.test.js`: AC1 — with tournament active, verify 2 tabs + ☰ visible in header. AC2 — tap ☰, verify menu shows History, Club, divider, End Tournament, Reset Tournament. AC3 — without tournament, verify no tabs, only ☰ with History + Club. AC4 — tap End Tournament in menu, accept confirmation, verify return to Start Tournament state. Test edge case: navigate to `#/match`, verify redirect to `#/live`. Test edge case: menu open + tap nav tab → menu closes. Observe tests FAIL
+- [X] T013 [US3] Write Playwright e2e tests in `tests/e2e/us3-navigation.test.js`: AC1 — with tournament active, verify 2 tabs + ☰ visible in header. AC2 — tap ☰, verify menu shows History, Club, divider, End Tournament, Reset Tournament. AC3 — without tournament, verify no tabs, only ☰ with History + Club. AC4 — tap End Tournament in menu, accept confirmation, verify return to Start Tournament state. Test edge case: navigate to `#/match`, verify redirect to `#/live`. Test edge case: navigate to `#/players`, verify redirect to `#/live`. Test edge case: menu open + tap nav tab → menu closes. Observe tests FAIL
 
 ### Implementation for US3
 
-- [ ] T014 [US3] Implement hamburger menu behavior in `src/router.js` or `index.html` inline script: toggle menu visibility on ☰ click, close on outside click (document listener), close on nav link click, close on menu item click. End Tournament and Reset Tournament menu items trigger `window.confirm()` then call `endTournament()` / `resetTournament()` and navigate to `#/start`
-- [ ] T015 [US3] Implement conditional tab visibility: in `src/router.js` or `src/main.js`, after `loadFromStorage()` and on `state:reset` events, show/hide Live + Standings tabs based on whether a tournament exists. When no tournament: hide tabs, show only ☰ (with History + Club in menu, no End/Reset). When tournament active: show Live + Standings tabs + full menu. Run US3 e2e tests via Playwright MCP — all PASS
+- [X] T014 [US3] Implement hamburger menu behavior in `src/router.js`: toggle menu visibility on ☰ click, close on outside click (document listener), close on nav link click, close on menu item click. End Tournament and Reset Tournament menu items trigger `window.confirm()` then call `endTournament()` / `resetTournament()` and navigate to `#/start`
+- [X] T015 [US3] Implement conditional tab visibility in `src/router.js`: after `loadFromStorage()` and on `state:reset` events, show/hide Live + Standings tabs based on whether a tournament exists. When no tournament: hide tabs, show only ☰ (with History + Club in menu, no End/Reset). When tournament active: show Live + Standings tabs + full menu. Run US3 e2e tests via Playwright MCP — all PASS
 
 **Checkpoint**: Navigation restructuring complete. 2 tabs during play, menu for secondary actions.
 
@@ -110,7 +110,7 @@
 
 ### Tests for US4 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T016 [US4] Write Playwright e2e tests in `tests/e2e/us4-visual-refresh.test.js`: AC1 — verify background color is near-black on Live view. AC2 — verify match card score uses monospace font and is visually large. AC3 — verify active cards have amber left-edge bar and completed cards have green left-edge bar. AC4 — verify all buttons meet 44px minimum touch height. Observe tests FAIL
+- [X] T016 [US4] Write Playwright e2e tests in `tests/e2e/us4-visual-refresh.test.js`: AC1 — verify background color is near-black on Live view. AC2 — verify match card score uses monospace font and is visually large. AC3 — verify active cards have amber left-edge bar and completed cards have green left-edge bar. AC4 — verify all buttons meet 44px minimum touch height. Observe tests FAIL
 
 ### Implementation for US4
 
@@ -131,12 +131,12 @@
 
 ### Tests for US5 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T021 [P] [US5] Write unit tests for Live column data in `tests/views/leaderboard.test.js`: test that leaderboard render includes a "Live" column. Test that a player in an active match shows "vs [name] [score]". Test that a player with no active match shows "—". Observe tests FAIL
-- [ ] T022 [P] [US5] Write Playwright e2e tests in `tests/e2e/us5-standings-live.test.js`: AC1 — start match Alice vs Bob, go to Standings, verify Alice row shows "vs Bob" with score. AC2 — verify Charlie (no match) shows "—". AC3 — complete match, verify Live column clears for both players. Observe tests FAIL
+- [X] T021 [P] [US5] Write unit tests for Live column data in `tests/views/leaderboard.test.js`: test that leaderboard render includes a "Live" column. Test that a player in an active match shows "vs [name] [score]". Test that a player with no active match shows "—". Observe tests FAIL
+- [X] T022 [P] [US5] Write Playwright e2e tests in `tests/e2e/us5-standings-live.test.js`: AC1 — start match Alice vs Bob, go to Standings, verify Alice row shows "vs Bob" with score. AC2 — verify Charlie (no match) shows "—". AC3 — complete match, verify Live column clears for both players. Observe tests FAIL
 
 ### Implementation for US5
 
-- [ ] T023 [US5] Update `src/views/leaderboard.js`: add "Live" column to table header. In row rendering, look up active matches from `getState().matches` to find if the player is in an active match. If yes, show "vs [opponent] [score]". If no, show "—". Subscribe to `state:matches:changed` to refresh the Live column when scores update. Make T021 + T022 tests PASS
+- [X] T023 [US5] Update `src/views/leaderboard.js`: add "Live" column to table header. In row rendering, look up active matches from `getState().matches` to find if the player is in an active match. If yes, show "vs [opponent] [score]". If no, show "—". Subscribe to `state:matches:changed` to refresh the Live column when scores update. Also apply new design tokens to the leaderboard container and table: dark surface, amber column headers, updated row hover state. Make T021 + T022 tests PASS
 
 **Checkpoint**: Standings page shows live match data. No more "all zeros" during early play.
 
@@ -150,12 +150,12 @@
 
 ### Tests for US6 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T024 [P] [US6] Write unit tests in `tests/views/liveView.test.js`: test tournament header renders with player count and ＋ button, no visible roster or input. Test that expanded roster HTML includes player items with Remove buttons. Observe tests FAIL
-- [ ] T025 [P] [US6] Write Playwright e2e tests in `tests/e2e/us6-player-management.test.js`: AC1 — verify header shows "N players" + ＋, no roster visible. AC2 — tap ＋, verify input appears, add player, verify input collapses and count increments. AC3 — tap player count, verify roster expands with Remove buttons. AC4 — tap player count again, verify roster collapses. Observe tests FAIL
+- [X] T024 [P] [US6] Write unit tests in `tests/views/liveView.test.js`: test tournament header renders with player count and ＋ button, no visible roster or input. Test that expanded roster HTML includes player items with Remove buttons. Observe tests FAIL
+- [X] T025 [P] [US6] Write Playwright e2e tests in `tests/e2e/us6-player-management.test.js`: AC1 — verify header shows "N players" + ＋, no roster visible. AC2 — tap ＋, verify input appears, add player, verify input collapses and count increments. AC3 — tap player count, verify roster expands with Remove buttons. AC4 — tap player count again, verify roster collapses. Observe tests FAIL
 
 ### Implementation for US6
 
-- [ ] T026 [US6] Implement collapsible tournament header in `src/views/liveView.js`: render compact header line with tournament name, "N players" clickable text, ＋ button. Track `_rosterExpanded` and `_addPlayerExpanded` booleans. On ＋ click: toggle add-player input inline (expand/collapse with CSS transition). On "N players" click: toggle roster list (show/hide player items with Remove buttons). On player added: collapse input, increment count. On player removed: update count, keep roster open. Subscribe to `state:players:changed` for reactive updates. Make T024 + T025 tests PASS
+- [X] T026 [US6] Implement collapsible tournament header in `src/views/liveView.js`: render compact header line with tournament name, "N players" clickable text, ＋ button. Track `_rosterExpanded` and `_addPlayerExpanded` booleans. On ＋ click: toggle add-player input inline (expand/collapse with CSS transition). On "N players" click: toggle roster list (show/hide player items with Remove buttons). On player added: collapse input, increment count. On player removed: update count, keep roster open. Subscribe to `state:players:changed` for reactive updates. Make T024 + T025 tests PASS
 
 **Checkpoint**: Player management is accessible but doesn't dominate the screen. Setup tasks stay out of the way during active play.
 
@@ -169,12 +169,12 @@
 
 ### Tests for US7 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T027 [P] [US7] Write unit tests in `tests/views/liveView.test.js`: test that "＋ New Match" button renders. Test that expanded form includes P1, P2, Target selectors. Test button is disabled when <2 players. Observe tests FAIL
-- [ ] T028 [P] [US7] Write Playwright e2e tests in `tests/e2e/us7-new-match-form.test.js`: AC1 — tap ＋ New Match, verify inline form appears. AC2 — select 2 players and target, submit, verify form collapses and new active card appears. AC3 — verify button disabled with <2 players. Observe tests FAIL
+- [X] T027 [P] [US7] Write unit tests in `tests/views/liveView.test.js`: test that "＋ New Match" button renders. Test that expanded form includes P1, P2, Target selectors. Test button is disabled when <2 players. Observe tests FAIL
+- [X] T028 [P] [US7] Write Playwright e2e tests in `tests/e2e/us7-new-match-form.test.js`: AC1 — tap ＋ New Match, verify inline form appears. AC2 — select 2 players and target, submit, verify form collapses and new active card appears. AC3 — verify button disabled with <2 players. Observe tests FAIL
 
 ### Implementation for US7
 
-- [ ] T029 [US7] Implement collapsible new match form in `src/views/liveView.js`: render "＋ New Match" ghost-style button. Track `_newMatchExpanded` boolean. On click: toggle inline form (Player 1 select, Player 2 select, Target input, Start button). On submit: call `startMatch(p1Id, p2Id, target)`, collapse form, new card appears via `state:matches:changed` handler. Disable button when <2 players. Make T027 + T028 tests PASS
+- [X] T029 [US7] Implement collapsible new match form in `src/views/liveView.js`: render "＋ New Match" ghost-style button. Track `_newMatchExpanded` boolean. On click: toggle inline form (Player 1 select, Player 2 select, Target input, Start button). On submit: call `startMatch(p1Id, p2Id, target)`, collapse form, new card appears via `state:matches:changed` handler. Disable button when <2 players. Make T027 + T028 tests PASS
 
 **Checkpoint**: All 7 user stories complete. Full tournament workflow operational through the new UI.
 
@@ -184,13 +184,14 @@
 
 **Purpose**: Edge cases, legacy cleanup, final validation
 
-- [ ] T030 Implement overflow "⋯" menu on active match cards in `src/views/liveView.js`: small positioned dropdown with "Abandon Match" option. On click: `window.confirm()` then `abandonMatch(matchId)`. Close on outside click (FR-009)
-- [ ] T031 Handle edge cases in `src/views/liveView.js`: long player names truncate with ellipsis (CSS `text-overflow: ellipsis`), scores never clipped. Test at 320px viewport width
-- [ ] T032 [P] Update `tests/e2e/smoke.spec.js` for new routes and selectors: update all references from `#/players` to `#/live`, remove `#/match` references, update nav selectors for 2-tab + menu layout
-- [ ] T033 [P] Remove deprecated files: delete `src/views/matchHub.js`, `src/views/matchDetail.js`, and their test files if not already removed. Clean up any dead imports in `src/router.js`
-- [ ] T034 [P] Update legacy e2e tests (`tests/e2e/us1-*.test.js` through `us5-*.test.js` from 003-match-mode): rewrite for new selectors and routes, or remove if fully superseded by new US1–US7 tests
-- [ ] T035 Run full Vitest suite (`npm test`) — verify all existing model/store unit tests pass unchanged (SC-005). Run full Playwright e2e suite via Playwright MCP — verify all tests pass. Confirm failure artifacts configuration works (screenshots + console logs to `./artifacts/`)
-- [ ] T036 Mobile responsiveness sweep: serve app, test all views at 320px, 375px, 768px, 1280px via Playwright MCP `browser_resize`. Verify no horizontal scroll, touch targets ≥44px, scores readable. Capture screenshots at each breakpoint
+- [X] T030a Write failing tests for overflow menu in `tests/views/liveView.test.js` and `tests/e2e/us8-overflow-menu.test.js`: unit — verify `renderMatchCard()` includes a ⋯ button; e2e — (a) verify ⋯ button visible on active card, (b) click ⋯, verify "Abandon Match" option appears, (c) click Abandon, accept confirm, verify card removed from active section. Observe tests FAIL
+- [X] T030 Implement overflow "⋯" menu on active match cards in `src/views/liveView.js`: small positioned dropdown with "Abandon Match" option. On click: `window.confirm()` then `abandonMatch(matchId)`. Close on outside click (FR-009). Make T030a tests PASS
+- [X] T031 Handle edge cases in `src/views/liveView.js`: long player names truncate with ellipsis (CSS `text-overflow: ellipsis`), scores never clipped. Test at 320px viewport width
+- [X] T032 [P] Update `tests/e2e/smoke.spec.js` for new routes and selectors: update all references from `#/players` to `#/live`, remove `#/match` references, update nav selectors for 2-tab + menu layout
+- [X] T033 [P] Remove deprecated files: delete `src/views/matchHub.js`, `src/views/matchDetail.js`, and their test files if not already removed. Clean up any dead imports in `src/router.js`
+- [X] T034 [P] Update legacy e2e tests (`tests/e2e/us1-*.test.js` through `us5-*.test.js` from 003-match-mode): rewrite for new selectors and routes, or remove if fully superseded by new US1–US7 tests
+- [X] T035 Run full Vitest suite (`npm test`) — verify all existing model/store unit tests pass unchanged (SC-005). Run full Playwright e2e suite via Playwright MCP — verify all tests pass. Confirm failure artifacts configuration works (screenshots + console logs to `./artifacts/`)
+- [X] T036 Mobile responsiveness sweep: serve app, test all views at 320px, 375px, 768px, 1280px via Playwright MCP `browser_resize`. Verify no horizontal scroll, touch targets ≥44px, scores readable. Capture screenshots at each breakpoint
 
 ---
 

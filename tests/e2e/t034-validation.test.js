@@ -5,34 +5,35 @@ async function startTournament(page, name) {
   await expect(page.locator('.name-prompt')).toBeVisible();
   await page.locator('.name-prompt input[type="text"]').fill(name);
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
 }
 
 async function addPlayer(page, name) {
+  await page.locator('[data-action="toggle-add-player"]').click();
   await page.locator('#player-name-input').fill(name);
   await page.locator('#add-player-form button[type="submit"]').click();
-  await expect(page.locator('.player-list .player-name', { hasText: name })).toBeVisible();
+  await page.waitForTimeout(50);
 }
 
 async function recordGame(page, winnerName, loserName) {
-  // Start a match with target=1 so it completes after one game
+  // Expand new-match form if needed
+  const formVisible = await page.locator('#start-match-form').isVisible().catch(() => false);
+  if (!formVisible) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('select[data-start-p1]').selectOption({ label: winnerName });
   await page.locator('select[data-start-p2]').selectOption({ label: loserName });
   await page.locator('input[data-start-target]').fill('1');
   await page.locator('#start-match-form button[type="submit"]').click();
-  // Enter the match
-  await page.locator('.match-card--active button[data-action="enter-match"]').first().click();
-  await expect(page.locator('.view--match')).toBeVisible();
-  // Record one game
-  await page.locator('select[data-game-winner]').selectOption({ label: winnerName });
-  await page.locator('button[data-action="record-game"]').click();
-  // Navigate back to hub
-  await page.locator('[data-action="back-to-hub"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await page.waitForTimeout(50);
+  const card = page.locator('.live-card--active').first();
+  await card.locator('[data-action="record-game"]').click();
+  await card.locator('[data-game-winner]').selectOption({ label: winnerName });
+  await card.locator('[data-action="submit-game"]').click();
+  await page.waitForTimeout(50);
 }
 
 async function endTournament(page) {
   page.once('dialog', (d) => d.accept());
+  await page.locator('#hamburger-btn').click();
   await page.locator('[data-action="end-tournament"]').click();
   await expect(page.locator('.name-prompt')).toBeVisible();
 }
@@ -63,7 +64,7 @@ test('T034 — player who wins both tournaments shows 2 tournament wins', async 
   await endTournament(page);
 
   await startTournament(page, 'Night 3');
-  await page.locator('a[href="#/club"]').click();
+  await page.goto('/#/club');
 
   const aliceRow = page.locator('.all-time-table tbody tr').first();
   await expect(aliceRow).toContainText('Alice');
@@ -130,7 +131,7 @@ test('T034 — tournamentsPlayed counts only tournaments the player participated
   await endTournament(page);
 
   await startTournament(page, 'Night 3');
-  await page.locator('a[href="#/club"]').click();
+  await page.goto('/#/club');
 
   // 5th column (index 4) is tournamentsPlayed
   const aliceRow = page.locator('.all-time-table tbody tr', { hasText: 'Alice' });
@@ -155,20 +156,23 @@ test('T034 — datalist suggestion fills the input and submits correctly', async
     localStorage.setItem('backgammon:players', '[]');
     localStorage.setItem('backgammon:matches', '[]');
   });
-  // Use full navigation (not hash-only) so main.js re-reads seeded localStorage into the store.
-  // The router default-redirect logic will send empty-hash → /players when tournament exists.
+  // Use full navigation so main.js re-reads seeded localStorage into the store.
   await page.goto('/');
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
 
-  // Type partial name — browser autocomplete fills the rest via datalist
+  // Open add-player form and type partial name
+  await page.locator('[data-action="toggle-add-player"]').click();
   await page.locator('#player-name-input').fill('Ali');
   // Programmatically set full value (simulates selecting datalist option)
   await page.locator('#player-name-input').fill('Alice');
   await page.locator('#add-player-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
 
-  await expect(page.locator('.player-list .player-name', { hasText: 'Alice' })).toBeVisible();
-  // Input should be cleared after submit
-  await expect(page.locator('#player-name-input')).toHaveValue('');
+  // Roster should show Alice
+  await page.locator('[data-action="toggle-roster"]').click();
+  await expect(page.locator('.live-roster')).toContainText('Alice');
+  // Input should be collapsed after submit
+  await expect(page.locator('#player-name-input')).not.toBeVisible();
 });
 
 // ---------------------------------------------------------------------------

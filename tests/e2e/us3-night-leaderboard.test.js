@@ -2,48 +2,52 @@
  * US3 — Night Leaderboard & Match History
  * Tests the leaderboard (match wins ranked) and game history (grouped by match).
  *
- * Requires matchHub (#/players), matchDetail (#/match), leaderboard (#/leaderboard),
- * and history (#/history) to be implemented with match-mode support.
+ * Requires liveView (#/live), leaderboard (#/leaderboard), and history (#/history)
+ * to be implemented with match-mode support.
  */
 
 import { test, expect } from './fixtures.js';
 
-// Helper: set up a fresh tournament
+// Helper: set up a fresh tournament with players
 async function setupNight(page, { players = ['Alice', 'Bob', 'Carol'] } = {}) {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
   await page.locator('.name-prompt input[type="text"]').fill('Test Night');
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
   for (const name of players) {
-    await page.locator('[data-add-player-input]').fill(name);
-    await page.locator('[data-add-player-form] button[type="submit"]').click();
+    await page.locator('[data-action="toggle-add-player"]').click();
+    await page.locator('#player-name-input').fill(name);
+    await page.locator('#add-player-form button[type="submit"]').click();
+    await page.waitForTimeout(50);
   }
 }
 
-// Helper: play a match to completion (winner wins with standard single-point games)
+// Helper: play a match to completion (winner wins all games with standard × 1)
 async function playMatchToCompletion(page, { p1Name, p2Name, winner, target = 3 }) {
-  // Start the match from matchHub
+  // Expand the new-match form
+  const formVisible = await page.locator('#start-match-form').isVisible().catch(() => false);
+  if (!formVisible) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('select[data-start-p1]').selectOption({ label: p1Name });
   await page.locator('select[data-start-p2]').selectOption({ label: p2Name });
   await page.locator('input[data-start-target]').fill(String(target));
-  await page.locator('button[data-action="start-match"]').click();
-  // Enter the match
-  const card = page.locator('.match-card--active', { hasText: p1Name }).first();
-  await card.locator('button[data-action="enter-match"]').click();
-  await expect(page.locator('.view--match')).toBeVisible();
-  // Record games until winner reaches target
+  await page.locator('#start-match-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
+
+  // Record games until winner reaches target (standard × 1 = 1 pt per game)
+  const card = page.locator('.live-card--active').filter({ hasText: p1Name });
   for (let i = 0; i < target; i++) {
-    await page.locator('select[data-game-winner]').selectOption({ label: winner });
-    await page.locator('select[data-result-type]').selectOption('standard');
-    await page.locator('select[data-cube-value]').selectOption('1');
-    await page.locator('button[data-action="record-game"]').click();
+    await card.locator('[data-action="record-game"]').click();
+    await card.locator('[data-game-winner]').selectOption({ label: winner });
+    await card.locator('[data-result-type]').selectOption('standard');
+    await card.locator('[data-cube-value]').selectOption('1');
+    await card.locator('[data-action="submit-game"]').click();
+    await page.waitForTimeout(50);
   }
-  await expect(page.locator('[data-testid="match-complete-banner"]')).toBeVisible();
-  // Back to hub
-  await page.locator('[data-action="back-to-hub"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+
+  // Match should now be complete
+  await expect(page.locator('.live-card--complete').filter({ hasText: p1Name })).toBeVisible();
 }
 
 // ---------------------------------------------------------------------------
@@ -72,34 +76,37 @@ test('AC1 — player with more match wins ranks higher', async ({ page }) => {
 test('AC2 — points tiebreaker: same wins but different points', async ({ page }) => {
   await setupNight(page, { players: ['Alice', 'Bob', 'Carol', 'Dave'] });
 
-  // Alice beats Bob 1-0 (1 point), Carol beats Dave 4-0 (gammon×2=4 points)
-  // Then Alice and Carol each have 1 win — Carol should rank higher via points
-
-  // Alice vs Bob — Alice wins with 1 standard game (target=1)
+  // Alice vs Bob — Alice wins with 1 standard game (target=1, 1 point)
+  await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
   await page.locator('select[data-start-p2]').selectOption({ label: 'Bob' });
   await page.locator('input[data-start-target]').fill('1');
-  await page.locator('button[data-action="start-match"]').click();
-  const aliceCard = page.locator('.match-card--active', { hasText: 'Alice' }).first();
-  await aliceCard.locator('button[data-action="enter-match"]').click();
-  await page.locator('select[data-game-winner]').selectOption({ label: 'Alice' });
-  await page.locator('select[data-result-type]').selectOption('standard');
-  await page.locator('select[data-cube-value]').selectOption('1');
-  await page.locator('button[data-action="record-game"]').click();
-  await page.locator('[data-action="back-to-hub"]').click();
+  await page.locator('#start-match-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
+
+  const aliceCard = page.locator('.live-card--active').filter({ hasText: 'Alice' }).first();
+  await aliceCard.locator('[data-action="record-game"]').click();
+  await aliceCard.locator('[data-game-winner]').selectOption({ label: 'Alice' });
+  await aliceCard.locator('[data-result-type]').selectOption('standard');
+  await aliceCard.locator('[data-cube-value]').selectOption('1');
+  await aliceCard.locator('[data-action="submit-game"]').click();
+  await page.waitForTimeout(50);
 
   // Carol vs Dave — Carol wins with gammon×2 (target=4, one game worth 4 pts)
+  await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('select[data-start-p1]').selectOption({ label: 'Carol' });
   await page.locator('select[data-start-p2]').selectOption({ label: 'Dave' });
   await page.locator('input[data-start-target]').fill('4');
-  await page.locator('button[data-action="start-match"]').click();
-  const carolCard = page.locator('.match-card--active', { hasText: 'Carol' }).first();
-  await carolCard.locator('button[data-action="enter-match"]').click();
-  await page.locator('select[data-game-winner]').selectOption({ label: 'Carol' });
-  await page.locator('select[data-result-type]').selectOption('gammon');
-  await page.locator('select[data-cube-value]').selectOption('2');
-  await page.locator('button[data-action="record-game"]').click();
-  await page.locator('[data-action="back-to-hub"]').click();
+  await page.locator('#start-match-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
+
+  const carolCard = page.locator('.live-card--active').filter({ hasText: 'Carol' }).first();
+  await carolCard.locator('[data-action="record-game"]').click();
+  await carolCard.locator('[data-game-winner]').selectOption({ label: 'Carol' });
+  await carolCard.locator('[data-result-type]').selectOption('gammon');
+  await carolCard.locator('[data-cube-value]').selectOption('2');
+  await carolCard.locator('[data-action="submit-game"]').click();
+  await page.waitForTimeout(50);
 
   // Navigate to leaderboard
   await page.goto('/#/leaderboard');
@@ -141,8 +148,8 @@ test('AC4 — leaderboard updates live when match completes', async ({ page }) =
   const aliceRow = page.locator('#standings-body tr', { hasText: 'Alice' });
   await expect(aliceRow).toBeVisible();
 
-  // Navigate to matchHub and play a match
-  await page.goto('/#/players');
+  // Navigate to live view and play a match
+  await page.goto('/#/live');
   await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice', target: 1 });
 
   // Navigate back to leaderboard — Alice should now show as rank 1

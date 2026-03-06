@@ -155,7 +155,7 @@ Starting a new match is done via a "＋ New Match" button that expands an inline
 - **FR-012**: The "＋" add-player button MUST expand an inline input that collapses after adding a player.
 - **FR-013**: A "＋ New Match" button MUST expand an inline form for starting a match, which collapses after submission.
 - **FR-014**: Completed matches MUST appear in a muted section below active matches with a visual indicator distinguishing them from active matches.
-- **FR-025**: Active match cards MUST display a game count (e.g., "Game 5") on the collapsed card. No game log table is shown on the Live view; the full game log is available in the History tab.
+- **FR-025**: Active match cards MUST display a game count (e.g., "Game 5") on the collapsed card. No game log table is shown on the Live view; the full game log is available in the History tab. *(Numbered FR-025 rather than FR-015 due to late clarification insertion; see Clarifications section.)*
 - **FR-015**: The Standings view MUST include a "Live" column showing active match opponent and score for players currently in a match.
 - **FR-016**: The "Live" column MUST clear when a match completes, and Wins/Points columns MUST update accordingly.
 - **FR-017**: 2–3 active match cards MUST be fully visible without scrolling on a 375px-wide viewport.
@@ -164,7 +164,7 @@ Starting a new match is done via a "＋ New Match" button that expands an inline
 - **FR-020**: End Tournament and Reset Tournament actions MUST require a confirmation dialog before executing.
 - **FR-021**: The app MUST use a dark, high-contrast color scheme with an amber accent across all views.
 - **FR-022**: History and Club views MUST be restyled to match the new design system without structural changes to their functionality.
-- **FR-023**: Card expand/collapse interactions MUST feel responsive with smooth transitions.
+- **FR-023**: Card expand/collapse interactions MUST complete within 200ms.
 - **FR-024**: Score updates MUST include a brief visual animation on the changed number.
 
 ### Key Entities

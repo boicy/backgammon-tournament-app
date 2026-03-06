@@ -55,10 +55,10 @@ for (const [label, width, height] of [['mobile', 375, 812], ['tablet', 768, 1024
       await expectNoHorizontalScroll(page);
     });
 
-    test('players view — no horizontal scroll', async ({ page }) => {
+    test('live view — no horizontal scroll', async ({ page }) => {
       await seedActive(page);
-      await page.goto('/#/players');
-      await expect(page.locator('.view--match-hub')).toBeVisible();
+      await page.goto('/#/live');
+      await expect(page.locator('.view--live')).toBeVisible();
       await expectNoHorizontalScroll(page);
     });
 
@@ -79,16 +79,20 @@ for (const [label, width, height] of [['mobile', 375, 812], ['tablet', 768, 1024
 
     test('add-player submit button meets 44px touch target', async ({ page }) => {
       await seedActive(page);
-      await page.goto('/#/players');
-      await expect(page.locator('.view--match-hub')).toBeVisible();
+      await page.goto('/#/live');
+      await expect(page.locator('.view--live')).toBeVisible();
+      // Open add-player form first
+      await page.locator('[data-action="toggle-add-player"]').click();
       const box = await page.locator('#add-player-form button[type="submit"]').boundingBox();
       expect(box.height).toBeGreaterThanOrEqual(44);
     });
 
     test('end-tournament button meets 44px touch target', async ({ page }) => {
       await seedActive(page);
-      await page.goto('/#/players');
-      await expect(page.locator('.view--match-hub')).toBeVisible();
+      await page.goto('/#/live');
+      await expect(page.locator('.view--live')).toBeVisible();
+      // Open hamburger menu to make button visible
+      await page.locator('#hamburger-btn').click();
       const box = await page.locator('[data-action="end-tournament"]').boundingBox();
       expect(box.height).toBeGreaterThanOrEqual(44);
     });
