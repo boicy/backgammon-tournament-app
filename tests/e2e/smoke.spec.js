@@ -126,26 +126,26 @@ test.describe('Match Mode', () => {
 
   test('can start a match between two players', async ({ page }) => {
     await page.locator('[data-action="toggle-new-match"]').click();
-    await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
-    await page.locator('select[data-start-p2]').selectOption({ label: 'Bob' });
+    await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
+    await page.locator('[data-action="pick-player"]').filter({ hasText: 'Bob' }).click();
     await page.locator('#start-match-form button[type="submit"]').click();
     await expect(page.locator('.live-card--active')).toBeVisible();
     await expect(page.locator('.live-card--active')).toContainText('Alice');
     await expect(page.locator('.live-card--active')).toContainText('Bob');
   });
 
-  test('shows error when same player selected for both roles', async ({ page }) => {
+  test('same player cannot be picked twice — button becomes disabled', async ({ page }) => {
     await page.locator('[data-action="toggle-new-match"]').click();
-    await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
-    await page.locator('select[data-start-p2]').selectOption({ label: 'Alice' });
-    await page.locator('#start-match-form button[type="submit"]').click();
-    await expect(page.locator('[data-match-error]')).toBeVisible();
+    await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
+    await expect(page.locator('[data-player-id]').filter({ hasText: 'Alice' })).toBeDisabled();
+    // Collapse form to reset
+    await page.locator('[data-action="toggle-new-match"]').click();
   });
 
   test('records a game and score updates inline on the card', async ({ page }) => {
     await page.locator('[data-action="toggle-new-match"]').click();
-    await page.locator('select[data-start-p1]').selectOption({ label: 'Alice' });
-    await page.locator('select[data-start-p2]').selectOption({ label: 'Bob' });
+    await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
+    await page.locator('[data-action="pick-player"]').filter({ hasText: 'Bob' }).click();
     await page.locator('#start-match-form button[type="submit"]').click();
     await page.waitForTimeout(50);
 

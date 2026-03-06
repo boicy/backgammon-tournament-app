@@ -57,12 +57,6 @@ function escapeHtml(str) {
 // HTML builders
 // ---------------------------------------------------------------------------
 
-function playerSelectOptions(players, exclude = []) {
-  return players
-    .filter((p) => !exclude.includes(p.id))
-    .map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`)
-    .join('');
-}
 
 function gameFormHtml(match, players) {
   const p1 = players.find((p) => p.id === match.player1Id);
