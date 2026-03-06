@@ -37,12 +37,18 @@ function updateTournamentState() {
   document.body.dataset.hasTournament = hasTournament ? 'true' : 'false';
 
   // Show/hide tournament-only menu items
-  const divider = document.getElementById('menu-divider-tournament');
-  const endBtn   = document.getElementById('menu-end-tournament');
-  const resetBtn = document.getElementById('menu-reset-tournament');
-  if (divider) divider.hidden = !hasTournament;
-  if (endBtn)   endBtn.hidden = !hasTournament;
-  if (resetBtn) resetBtn.hidden = !hasTournament;
+  const divider      = document.getElementById('menu-divider-tournament');
+  const endBtn       = document.getElementById('menu-end-tournament');
+  const resetBtn     = document.getElementById('menu-reset-tournament');
+  const liveLink     = document.getElementById('menu-live');
+  const standingsLink = document.getElementById('menu-standings');
+  const primaryDiv   = document.getElementById('menu-divider-primary');
+  if (divider)       divider.hidden      = !hasTournament;
+  if (endBtn)        endBtn.hidden       = !hasTournament;
+  if (resetBtn)      resetBtn.hidden     = !hasTournament;
+  if (liveLink)      liveLink.hidden     = !hasTournament;
+  if (standingsLink) standingsLink.hidden = !hasTournament;
+  if (primaryDiv)    primaryDiv.hidden   = !hasTournament;
 }
 
 // ---------------------------------------------------------------------------
