@@ -103,7 +103,7 @@ Add after the existing `.empty-state` rule:
 }
 
 .empty-state-card p {
-  color: var(--color-muted);
+  color: var(--color-text-muted);
   margin: 0;
   max-width: 28ch;
 }
@@ -211,7 +211,7 @@ Add after `.empty-state-card`:
 
 .no-tournament-banner p {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--color-text-muted);
   font-size: var(--font-sm);
 }
 ```

@@ -594,10 +594,11 @@ select option {
 
 .empty-state-card h2 {
   margin: 0;
+  border-bottom: none;
 }
 
 .empty-state-card p {
-  color: var(--color-muted);
+  color: var(--color-text-muted);
   margin: 0;
   max-width: 28ch;
 }
