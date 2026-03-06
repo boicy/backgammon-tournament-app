@@ -27,7 +27,6 @@ async function recordOneGame(page, winnerName, loserName) {
   if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: winnerName }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: loserName }).click();
-  await page.locator('input[data-start-target]').fill('1');
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
   // Record inline

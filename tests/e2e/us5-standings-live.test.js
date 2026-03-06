@@ -33,7 +33,9 @@ async function startMatch(page, { p1Name, p2Name, target = 7 } = {}) {
   if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p2Name }).click();
-  await page.locator('input[data-start-target]').fill(String(target));
+  if (target !== 7) {
+    await page.locator('[data-action="pick-target"]').filter({ hasText: new RegExp(`^${target}$`) }).click();
+  }
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
 }
@@ -80,11 +82,12 @@ test('AC2 — player with no active match shows "—" in Live column', async ({ 
 
 test('AC3 — Live column clears after match completes', async ({ page }) => {
   await setupTournament(page, { players: ['Alice', 'Bob'] });
-  await startMatch(page, { p1Name: 'Alice', p2Name: 'Bob', target: 1 });
+  await startMatch(page, { p1Name: 'Alice', p2Name: 'Bob', target: 3 });
 
-  // Record a game to complete the match
+  // Record a game to complete the match (cube=4: standard×4=4pts >= target 3)
   await page.locator('[data-action="record-game"]').first().click();
   await page.locator('[data-game-winner]').first().selectOption({ index: 0 });
+  await page.locator('[data-cube-value]').first().selectOption('4');
   await page.locator('[data-action="submit-game"]').first().click();
 
   // Now go to Standings

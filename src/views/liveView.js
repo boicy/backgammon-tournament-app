@@ -16,6 +16,7 @@ let _newMatchExpanded = false;
 let _pickStep = null;       // null | 1 | 2 | 'confirm'
 let _selectedP1 = null;     // player ID
 let _selectedP2 = null;     // player ID
+let _selectedTarget = 7;   // target score (reset to 7 on form close/render)
 let _container = null;
 
 // Event bus handlers stored for cleanup
@@ -209,6 +210,11 @@ function newMatchFormHtml(players) {
   if (_pickStep === 'confirm') {
     const p1Name = escapeHtml(playerName(players, _selectedP1));
     const p2Name = escapeHtml(playerName(players, _selectedP2));
+    const targetPresets = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21];
+    const targetButtonsHtml = targetPresets.map((v) => {
+      const cls = v === _selectedTarget ? 'pick-btn pick-btn--selected' : 'pick-btn';
+      return `<button class="${cls}" type="button" data-action="pick-target" data-target-value="${v}">${v}</button>`;
+    }).join('');
     return `
       <div class="live-new-match live-new-match--expanded">
         <button class="live-new-match__toggle btn-secondary" type="button" data-action="toggle-new-match">
@@ -221,9 +227,7 @@ function newMatchFormHtml(players) {
             <button class="pick-pill pick-pill--selected" type="button" data-action="deselect-player" data-player-id="${escapeHtml(_selectedP2)}">${p2Name}</button>
           </div>
           <form id="start-match-form" class="pick-start-form">
-            <label class="live-form__label">Target
-              <input class="live-form__input" type="number" data-start-target min="1" value="7">
-            </label>
+            <div class="pick-target-grid">${targetButtonsHtml}</div>
             <button class="btn-primary" type="submit">Start</button>
             <div data-match-error class="live-error" aria-live="polite"></div>
           </form>
@@ -317,6 +321,7 @@ export function render(container) {
   _pickStep = null;
   _selectedP1 = null;
   _selectedP2 = null;
+  _selectedTarget = 7;
   container.innerHTML = viewHtml(getState());
 }
 
@@ -502,6 +507,12 @@ export function onMount(container) {
       return;
     }
 
+    if (action === 'pick-target') {
+      _selectedTarget = Number(target.dataset.targetValue);
+      refreshNewMatchForm();
+      return;
+    }
+
     if (action === 'deselect-player') {
       if (_pickStep === 'confirm') {
         if (playerId === _selectedP2) {
@@ -523,10 +534,12 @@ export function onMount(container) {
         _pickStep = 1;
         _selectedP1 = null;
         _selectedP2 = null;
+        _selectedTarget = 7;
       } else {
         _pickStep = null;
         _selectedP1 = null;
         _selectedP2 = null;
+        _selectedTarget = 7;
       }
       refreshNewMatchForm();
       return;
@@ -575,15 +588,15 @@ export function onMount(container) {
 
     if (e.target.id === 'start-match-form') {
       e.preventDefault();
-      const target = parseInt(_container.querySelector('[data-start-target]')?.value ?? '7', 10);
       const errorEl = _container.querySelector('[data-match-error]');
       if (errorEl) errorEl.textContent = '';
       try {
-        startMatch(_selectedP1, _selectedP2, target);
+        startMatch(_selectedP1, _selectedP2, _selectedTarget);
         _newMatchExpanded = false;
         _pickStep = null;
         _selectedP1 = null;
         _selectedP2 = null;
+        _selectedTarget = 7;
         refreshNewMatchForm();
       } catch (err) {
         if (errorEl) errorEl.textContent = err.message;

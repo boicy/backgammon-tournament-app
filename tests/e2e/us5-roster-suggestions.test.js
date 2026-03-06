@@ -19,7 +19,6 @@ async function archiveTournamentWith(page, tournamentName, players) {
     if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
     await page.locator('[data-action="pick-player"]').filter({ hasText: players[0] }).click();
     await page.locator('[data-action="pick-player"]').filter({ hasText: players[1] }).click();
-    await page.locator('input[data-start-target]').fill('1');
     await page.locator('#start-match-form button[type="submit"]').click();
     await page.waitForTimeout(50);
     const card = page.locator('.live-card--active').first();
