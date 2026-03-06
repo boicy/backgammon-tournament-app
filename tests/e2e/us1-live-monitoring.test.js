@@ -37,11 +37,11 @@ async function setupTournament(page, { name = 'Club Night', players = [] } = {})
 async function startMatch(page, { p1Name, p2Name, target = 7 } = {}) {
   const toggleBtn = page.locator('[data-action="toggle-new-match"]');
   // Only click if not already expanded
-  const isExpanded = await page.locator('#start-match-form').isVisible().catch(() => false);
+  const isExpanded = await page.locator('.live-new-match--expanded').isVisible().catch(() => false);
   if (!isExpanded) await toggleBtn.click();
 
-  await page.locator('select[data-start-p1]').selectOption({ label: p1Name });
-  await page.locator('select[data-start-p2]').selectOption({ label: p2Name });
+  await page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click();
+  await page.locator('[data-action="pick-player"]').filter({ hasText: p2Name }).click();
   await page.locator('input[data-start-target]').fill(String(target));
   await page.locator('#start-match-form button[type="submit"]').click();
   // Form collapses after starting

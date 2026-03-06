@@ -37,10 +37,10 @@ async function addPlayers(page, names) {
 }
 
 async function startMatch(page, { p1Name, p2Name, target = 7 } = {}) {
-  const formVisible = await page.locator('#start-match-form').isVisible().catch(() => false);
-  if (!formVisible) await page.locator('[data-action="toggle-new-match"]').click();
-  await page.locator('select[data-start-p1]').selectOption({ label: p1Name });
-  await page.locator('select[data-start-p2]').selectOption({ label: p2Name });
+  const expanded = await page.locator('.live-new-match--expanded').isVisible().catch(() => false);
+  if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
+  await page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click();
+  await page.locator('[data-action="pick-player"]').filter({ hasText: p2Name }).click();
   await page.locator('input[data-start-target]').fill(String(target));
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);

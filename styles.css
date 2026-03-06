@@ -1777,6 +1777,112 @@ select option {
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
+/* ===== Player pick grid ===== */
+.pick-panel {
+  padding: var(--space-md);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.pick-prompt {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.pick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.pick-btn {
+  min-height: var(--touch-target);
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.pick-btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-glow);
+}
+
+.pick-btn--selected {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+  cursor: default;
+}
+
+.pick-btn--selected:hover:not(:disabled) {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.pick-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pick-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.pick-pill {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+}
+
+.pick-pill--selected {
+  background-color: var(--color-accent);
+  color: #fff;
+}
+
+.pick-pill--selected:hover {
+  opacity: 0.85;
+}
+
+.pick-vs {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.pick-start-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.pick-start-form .live-form__label {
+  flex: 0 0 auto;
+}
+
+.pick-start-form .btn-primary {
+  min-height: var(--touch-target);
+}
+
 /* ===== Completed matches section label ===== */
 .live-completed-label {
   font-size: 0.72rem;

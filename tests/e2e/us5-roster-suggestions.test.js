@@ -15,10 +15,10 @@ async function archiveTournamentWith(page, tournamentName, players) {
 
   // Record a match between first two players (only possible with 2+ players)
   if (players.length >= 2) {
-    const formVisible = await page.locator('#start-match-form').isVisible().catch(() => false);
-    if (!formVisible) await page.locator('[data-action="toggle-new-match"]').click();
-    await page.locator('select[data-start-p1]').selectOption({ label: players[0] });
-    await page.locator('select[data-start-p2]').selectOption({ label: players[1] });
+    const expanded = await page.locator('.live-new-match--expanded').isVisible().catch(() => false);
+    if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
+    await page.locator('[data-action="pick-player"]').filter({ hasText: players[0] }).click();
+    await page.locator('[data-action="pick-player"]').filter({ hasText: players[1] }).click();
     await page.locator('input[data-start-target]').fill('1');
     await page.locator('#start-match-form button[type="submit"]').click();
     await page.waitForTimeout(50);

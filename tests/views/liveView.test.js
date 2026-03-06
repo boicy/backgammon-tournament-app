@@ -364,8 +364,8 @@ describe('liveView — new match form', () => {
                       container.querySelector('.live-new-match__toggle');
     if (toggleBtn && !toggleBtn.disabled) toggleBtn.click();
 
-    const selects = container.querySelectorAll('select[data-new-p1], select[data-new-p2], select[data-start-p1], select[data-start-p2]');
-    expect(selects.length).toBeGreaterThanOrEqual(2);
+    const pickBtns = container.querySelectorAll('[data-action="pick-player"]');
+    expect(pickBtns.length).toBeGreaterThanOrEqual(2);
     cleanup(container);
   });
 });
