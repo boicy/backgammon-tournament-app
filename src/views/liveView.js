@@ -13,6 +13,9 @@ let _expandedCardId = null;   // FR-008: only one inline form open at a time
 let _rosterExpanded = false;
 let _addPlayerExpanded = false;
 let _newMatchExpanded = false;
+let _pickStep = null;       // null | 1 | 2 | 'confirm'
+let _selectedP1 = null;     // player ID
+let _selectedP2 = null;     // player ID
 let _container = null;
 
 // Event bus handlers stored for cleanup
@@ -199,6 +202,7 @@ function activeMatchesHtml(matches, players) {
 
 function newMatchFormHtml(players) {
   const canStart = players.length >= 2;
+
   if (!_newMatchExpanded) {
     return `
       <div class="live-new-match">
@@ -208,28 +212,49 @@ function newMatchFormHtml(players) {
       </div>`;
   }
 
+  if (_pickStep === 'confirm') {
+    const p1Name = escapeHtml(playerName(players, _selectedP1));
+    const p2Name = escapeHtml(playerName(players, _selectedP2));
+    return `
+      <div class="live-new-match live-new-match--expanded">
+        <button class="live-new-match__toggle btn-secondary" type="button" data-action="toggle-new-match">
+          ＋ New Match
+        </button>
+        <div class="pick-panel">
+          <div class="pick-confirm">
+            <button class="pick-pill pick-pill--selected" type="button" data-action="deselect-player" data-player-id="${escapeHtml(_selectedP1)}">${p1Name}</button>
+            <span class="pick-vs">vs</span>
+            <button class="pick-pill pick-pill--selected" type="button" data-action="deselect-player" data-player-id="${escapeHtml(_selectedP2)}">${p2Name}</button>
+          </div>
+          <form id="start-match-form" class="pick-start-form">
+            <label class="live-form__label">Target
+              <input class="live-form__input" type="number" data-start-target min="1" value="7">
+            </label>
+            <button class="btn-primary" type="submit">Start</button>
+            <div data-match-error class="live-error" aria-live="polite"></div>
+          </form>
+        </div>
+      </div>`;
+  }
+
+  const prompt = _pickStep === 2 ? 'Pick Player 2' : 'Pick Player 1';
+  const buttonsHtml = players.map((p) => {
+    const isSelected = p.id === _selectedP1;
+    const cls = isSelected ? 'pick-btn pick-btn--selected' : 'pick-btn';
+    const action = isSelected ? 'deselect-player' : 'pick-player';
+    const disabled = isSelected && _pickStep === 2 ? ' disabled' : '';
+    return `<button class="${cls}" type="button" data-action="${action}" data-player-id="${escapeHtml(p.id)}"${disabled}>${escapeHtml(p.name)}</button>`;
+  }).join('');
+
   return `
     <div class="live-new-match live-new-match--expanded">
       <button class="live-new-match__toggle btn-secondary" type="button" data-action="toggle-new-match">
         ＋ New Match
       </button>
-      <form id="start-match-form" class="live-new-match__form">
-        <label class="live-form__label">Player 1
-          <select class="live-form__select" data-start-p1 data-new-p1>
-            ${playerSelectOptions(players)}
-          </select>
-        </label>
-        <label class="live-form__label">Player 2
-          <select class="live-form__select" data-start-p2 data-new-p2>
-            ${playerSelectOptions(players)}
-          </select>
-        </label>
-        <label class="live-form__label">Target
-          <input class="live-form__input" type="number" data-start-target min="1" value="7">
-        </label>
-        <button class="btn-primary" type="submit">Start</button>
-        <div data-match-error class="live-error" aria-live="polite"></div>
-      </form>
+      <div class="pick-panel">
+        <p class="pick-prompt">${prompt}</p>
+        <div class="pick-grid">${buttonsHtml}</div>
+      </div>
     </div>`;
 }
 
@@ -295,6 +320,9 @@ export function render(container) {
   _rosterExpanded = false;
   _addPlayerExpanded = false;
   _newMatchExpanded = false;
+  _pickStep = null;
+  _selectedP1 = null;
+  _selectedP2 = null;
   container.innerHTML = viewHtml(getState());
 }
 
@@ -468,8 +496,44 @@ export function onMount(container) {
       return;
     }
 
+    if (action === 'pick-player') {
+      if (_pickStep === 1) {
+        _selectedP1 = playerId;
+        _pickStep = 2;
+      } else if (_pickStep === 2) {
+        _selectedP2 = playerId;
+        _pickStep = 'confirm';
+      }
+      refreshNewMatchForm();
+      return;
+    }
+
+    if (action === 'deselect-player') {
+      if (_pickStep === 'confirm') {
+        if (playerId === _selectedP2) {
+          _selectedP2 = null;
+          _pickStep = 2;
+        } else if (playerId === _selectedP1) {
+          _selectedP1 = _selectedP2;
+          _selectedP2 = null;
+          _pickStep = _selectedP1 ? 2 : 1;
+        }
+      }
+      refreshNewMatchForm();
+      return;
+    }
+
     if (action === 'toggle-new-match') {
       _newMatchExpanded = !_newMatchExpanded;
+      if (_newMatchExpanded) {
+        _pickStep = 1;
+        _selectedP1 = null;
+        _selectedP2 = null;
+      } else {
+        _pickStep = null;
+        _selectedP1 = null;
+        _selectedP2 = null;
+      }
       refreshNewMatchForm();
       return;
     }
@@ -517,14 +581,15 @@ export function onMount(container) {
 
     if (e.target.id === 'start-match-form') {
       e.preventDefault();
-      const p1 = _container.querySelector('[data-start-p1]')?.value;
-      const p2 = _container.querySelector('[data-start-p2]')?.value;
       const target = parseInt(_container.querySelector('[data-start-target]')?.value ?? '7', 10);
       const errorEl = _container.querySelector('[data-match-error]');
       if (errorEl) errorEl.textContent = '';
       try {
-        startMatch(p1, p2, target);
+        startMatch(_selectedP1, _selectedP2, target);
         _newMatchExpanded = false;
+        _pickStep = null;
+        _selectedP1 = null;
+        _selectedP2 = null;
         refreshNewMatchForm();
       } catch (err) {
         if (errorEl) errorEl.textContent = err.message;
