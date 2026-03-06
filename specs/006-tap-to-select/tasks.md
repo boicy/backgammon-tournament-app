@@ -19,8 +19,8 @@
 
 **Purpose**: Read current code to understand exact change points before touching anything.
 
-- [ ] T001 Read `src/views/liveView.js` lines 1–20 (ephemeral state block) and lines 200–234 (`newMatchFormHtml`) and lines 471–475 (`toggle-new-match` handler) and lines 518–533 (submit handler) to understand the full current shape of the new-match flow
-- [ ] T002 Read `tests/e2e/us7-new-match-form.test.js` to understand all current ACs and what selectors they use
+- [x] T001 Read `src/views/liveView.js` lines 1–20 (ephemeral state block) and lines 200–234 (`newMatchFormHtml`) and lines 471–475 (`toggle-new-match` handler) and lines 518–533 (submit handler) to understand the full current shape of the new-match flow
+- [x] T002 Read `tests/e2e/us7-new-match-form.test.js` to understand all current ACs and what selectors they use
 
 ---
 
@@ -28,8 +28,8 @@
 
 **Purpose**: Add the 3 new ephemeral state variables that both user stories depend on. Must be complete before US1 or US2.
 
-- [ ] T003 Add `let _pickStep = null;`, `let _selectedP1 = null;`, `let _selectedP2 = null;` to the ephemeral state block in `src/views/liveView.js` (after `let _newMatchExpanded = false;` at line 15)
-- [ ] T004 Add reset of `_pickStep`, `_selectedP1`, `_selectedP2` inside `render()` in `src/views/liveView.js` (after `_newMatchExpanded = false;` at line 297)
+- [x] T003 Add `let _pickStep = null;`, `let _selectedP1 = null;`, `let _selectedP2 = null;` to the ephemeral state block in `src/views/liveView.js` (after `let _newMatchExpanded = false;` at line 15)
+- [x] T004 Add reset of `_pickStep`, `_selectedP1`, `_selectedP2` inside `render()` in `src/views/liveView.js` (after `_newMatchExpanded = false;` at line 297)
 
 **Checkpoint**: Foundation ready — user story implementation can begin.
 
@@ -45,7 +45,7 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T005 [US1] Rewrite `tests/e2e/us7-new-match-form.test.js` replacing AC1 (assert `.pick-grid` visible + `.pick-prompt` contains "Pick Player 1" + count of `[data-action="pick-player"]` buttons) and AC2 (tap Alice → prompt changes to "Pick Player 2", tap Bob → `.pick-confirm` visible with both names, submit → active card appears). Keep AC3 (disabled button) unchanged. New file content:
+- [x] T005 [US1] Rewrite `tests/e2e/us7-new-match-form.test.js` replacing AC1 (assert `.pick-grid` visible + `.pick-prompt` contains "Pick Player 1" + count of `[data-action="pick-player"]` buttons) and AC2 (tap Alice → prompt changes to "Pick Player 2", tap Bob → `.pick-confirm` visible with both names, submit → active card appears). Keep AC3 (disabled button) unchanged. New file content:
 
   ```javascript
   /**
@@ -120,11 +120,11 @@
   });
   ```
 
-- [ ] T006 [US1] Run test to confirm AC1 and AC2 FAIL: `npx playwright test tests/e2e/us7-new-match-form.test.js --grep "AC1|AC2" 2>&1 | tail -15`
+- [x] T006 [US1] Run test to confirm AC1 and AC2 FAIL: `npx playwright test tests/e2e/us7-new-match-form.test.js --grep "AC1|AC2" 2>&1 | tail -15`
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Rewrite `newMatchFormHtml()` in `src/views/liveView.js` (lines 200–234) to render a 3-step flow:
+- [x] T007 [US1] Rewrite `newMatchFormHtml()` in `src/views/liveView.js` (lines 200–234) to render a 3-step flow:
 
   ```javascript
   function newMatchFormHtml(players) {
@@ -186,7 +186,7 @@
   }
   ```
 
-- [ ] T008 [P] [US1] Add CSS for player pick grid to `styles.css` after the `.live-new-match__form { ... }` block (~line 1778):
+- [x] T008 [P] [US1] Add CSS for player pick grid to `styles.css` after the `.live-new-match__form { ... }` block (~line 1778):
 
   ```css
   /* ===== Player pick grid ===== */
@@ -296,7 +296,7 @@
   }
   ```
 
-- [ ] T009 [US1] Add `pick-player` click handler in `src/views/liveView.js` delegated click handler (before the `toggle-new-match` block):
+- [x] T009 [US1] Add `pick-player` click handler in `src/views/liveView.js` delegated click handler (before the `toggle-new-match` block):
 
   ```javascript
   if (action === 'pick-player') {
@@ -312,7 +312,7 @@
   }
   ```
 
-- [ ] T010 [US1] Update `toggle-new-match` handler in `src/views/liveView.js` to initialise and reset pick state:
+- [x] T010 [US1] Update `toggle-new-match` handler in `src/views/liveView.js` to initialise and reset pick state:
 
   ```javascript
   if (action === 'toggle-new-match') {
@@ -331,7 +331,7 @@
   }
   ```
 
-- [ ] T011 [US1] Update `start-match-form` submit handler in `src/views/liveView.js` to read from `_selectedP1`/`_selectedP2` instead of `<select>` values:
+- [x] T011 [US1] Update `start-match-form` submit handler in `src/views/liveView.js` to read from `_selectedP1`/`_selectedP2` instead of `<select>` values:
 
   ```javascript
   if (e.target.id === 'start-match-form') {
@@ -353,8 +353,8 @@
   }
   ```
 
-- [ ] T012 [US1] Run AC1–AC3 e2e tests to confirm they now PASS: `npx playwright test tests/e2e/us7-new-match-form.test.js 2>&1 | tail -10`
-- [ ] T013 [US1] Commit: `git add src/views/liveView.js styles.css tests/e2e/us7-new-match-form.test.js && git commit -m "feat: tap-to-select player grid for new match form"`
+- [x] T012 [US1] Run AC1–AC3 e2e tests to confirm they now PASS: `npx playwright test tests/e2e/us7-new-match-form.test.js 2>&1 | tail -10`
+- [x] T013 [US1] Commit: `git add src/views/liveView.js styles.css tests/e2e/us7-new-match-form.test.js && git commit -m "feat: tap-to-select player grid for new match form"`
 
 **Checkpoint**: Player pick grid is live. Users can tap two names and start a match. US1 independently complete.
 
@@ -368,7 +368,7 @@
 
 ### Tests for User Story 2 ⚠️ WRITE FIRST (TDD)
 
-- [ ] T014 [US2] Add AC4 test to `tests/e2e/us7-new-match-form.test.js` (append after AC3):
+- [x] T014 [US2] Add AC4 test to `tests/e2e/us7-new-match-form.test.js` (append after AC3):
 
   ```javascript
   test('AC4 — tapping selected pill deselects and returns to previous step', async ({ page }) => {
@@ -399,11 +399,11 @@
   });
   ```
 
-- [ ] T015 [US2] Run AC4 test to confirm it FAILS: `npx playwright test tests/e2e/us7-new-match-form.test.js --grep "AC4" 2>&1 | tail -10`
+- [x] T015 [US2] Run AC4 test to confirm it FAILS: `npx playwright test tests/e2e/us7-new-match-form.test.js --grep "AC4" 2>&1 | tail -10`
 
 ### Implementation for User Story 2
 
-- [ ] T016 [US2] Add `deselect-player` click handler in `src/views/liveView.js` (directly after the `pick-player` handler added in T009):
+- [x] T016 [US2] Add `deselect-player` click handler in `src/views/liveView.js` (directly after the `pick-player` handler added in T009):
 
   ```javascript
   if (action === 'deselect-player') {
@@ -422,8 +422,8 @@
   }
   ```
 
-- [ ] T017 [US2] Run full us7 test file to confirm all 4 tests pass: `npx playwright test tests/e2e/us7-new-match-form.test.js 2>&1 | tail -10`
-- [ ] T018 [US2] Commit: `git add src/views/liveView.js tests/e2e/us7-new-match-form.test.js && git commit -m "feat: deselect player by tapping selected pill"`
+- [x] T017 [US2] Run full us7 test file to confirm all 4 tests pass: `npx playwright test tests/e2e/us7-new-match-form.test.js 2>&1 | tail -10`
+- [x] T018 [US2] Commit: `git add src/views/liveView.js tests/e2e/us7-new-match-form.test.js && git commit -m "feat: deselect player by tapping selected pill"`
 
 **Checkpoint**: Both user stories complete and independently testable.
 
@@ -433,24 +433,24 @@
 
 **Purpose**: Update all other e2e helpers that start matches, remove dead code, verify full suite.
 
-- [ ] T019 Update unit test assertion in `tests/views/liveView.test.js` (~line 367): replace `querySelectorAll('select[data-new-p1], ...')` with `querySelectorAll('[data-action="pick-player"]')` and update `expect(selects.length)` to `expect(pickBtns.length)`
-- [ ] T020 Update `startMatch`/`recordGame` helper in `tests/e2e/us1-live-monitoring.test.js`: replace `selectOption({ label: p1Name })` on `select[data-start-p1]` and `select[data-start-p2]` with `page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click()` and same for p2Name
-- [ ] T021 Update helper in `tests/e2e/us2-inline-recording.test.js`: same pattern as T020
-- [ ] T022 Update helper in `tests/e2e/us2-end-archive.test.js`: same pattern as T020
-- [ ] T023 Update helper and inline calls in `tests/e2e/us3-night-leaderboard.test.js`: same pattern as T020 (has both helper and inline calls at lines 81–82 and 97–98)
-- [ ] T024 Update helper in `tests/e2e/us3-browse-archive.test.js`: same pattern as T020
-- [ ] T025 Update helper in `tests/e2e/us4-visual-refresh.test.js`: same pattern as T020
-- [ ] T026 Update helper in `tests/e2e/us4-all-time-leaderboard.test.js`: same pattern as T020
-- [ ] T027 Update helper in `tests/e2e/us5-standings-live.test.js`: same pattern as T020
-- [ ] T028 Update helper in `tests/e2e/us5-roster-suggestions.test.js`: same pattern as T020
-- [ ] T029 Update helper in `tests/e2e/t034-validation.test.js`: same pattern as T020
-- [ ] T030 Update `tests/e2e/smoke.spec.js`: update the two startMatch calls (lines ~129 and ~147) with pick-player pattern; for the same-player test (~line 139) replace with assertion that Alice's pick button is disabled after selecting her (same player can't be picked twice by design)
-- [ ] T031 Remove dead `playerSelectOptions()` function from `src/views/liveView.js` (lines 57–62); verify no remaining callers with `grep -n "playerSelectOptions" src/views/liveView.js`
-- [ ] T032 Run full Playwright e2e suite: `npx playwright test 2>&1 | tail -15` — confirm all tests pass
-- [ ] T033 Run Vitest unit suite: `npm test 2>&1 | tail -5` — confirm all tests pass
-- [ ] T034 [P] Visually verify in browser via Playwright MCP: navigate to `http://localhost:3456`, start tournament, add 3 players, tap "+ New Match" — screenshot confirms grid appears with player name buttons
-- [ ] T035 Commit remaining changes: `git add tests/ src/views/liveView.js && git commit -m "refactor: update all e2e helpers + remove dead playerSelectOptions()"`
-- [ ] T036 Update `speckit/project-memory.md` to note 006-tap-to-select complete and new e2e test count
+- [x] T019 Update unit test assertion in `tests/views/liveView.test.js` (~line 367): replace `querySelectorAll('select[data-new-p1], ...')` with `querySelectorAll('[data-action="pick-player"]')` and update `expect(selects.length)` to `expect(pickBtns.length)`
+- [x] T020 Update `startMatch`/`recordGame` helper in `tests/e2e/us1-live-monitoring.test.js`: replace `selectOption({ label: p1Name })` on `select[data-start-p1]` and `select[data-start-p2]` with `page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click()` and same for p2Name
+- [x] T021 Update helper in `tests/e2e/us2-inline-recording.test.js`: same pattern as T020
+- [x] T022 Update helper in `tests/e2e/us2-end-archive.test.js`: same pattern as T020
+- [x] T023 Update helper and inline calls in `tests/e2e/us3-night-leaderboard.test.js`: same pattern as T020 (has both helper and inline calls at lines 81–82 and 97–98)
+- [x] T024 Update helper in `tests/e2e/us3-browse-archive.test.js`: same pattern as T020
+- [x] T025 Update helper in `tests/e2e/us4-visual-refresh.test.js`: same pattern as T020
+- [x] T026 Update helper in `tests/e2e/us4-all-time-leaderboard.test.js`: same pattern as T020
+- [x] T027 Update helper in `tests/e2e/us5-standings-live.test.js`: same pattern as T020
+- [x] T028 Update helper in `tests/e2e/us5-roster-suggestions.test.js`: same pattern as T020
+- [x] T029 Update helper in `tests/e2e/t034-validation.test.js`: same pattern as T020
+- [x] T030 Update `tests/e2e/smoke.spec.js`: update the two startMatch calls (lines ~129 and ~147) with pick-player pattern; for the same-player test (~line 139) replace with assertion that Alice's pick button is disabled after selecting her (same player can't be picked twice by design)
+- [x] T031 Remove dead `playerSelectOptions()` function from `src/views/liveView.js` (lines 57–62); verify no remaining callers with `grep -n "playerSelectOptions" src/views/liveView.js`
+- [x] T032 Run full Playwright e2e suite: `npx playwright test 2>&1 | tail -15` — confirm all tests pass
+- [x] T033 Run Vitest unit suite: `npm test 2>&1 | tail -5` — confirm all tests pass
+- [x] T034 [P] Visually verify in browser via Playwright MCP: navigate to `http://localhost:3456`, start tournament, add 3 players, tap "+ New Match" — screenshot confirms grid appears with player name buttons
+- [x] T035 Commit remaining changes: `git add tests/ src/views/liveView.js && git commit -m "refactor: update all e2e helpers + remove dead playerSelectOptions()"`
+- [x] T036 Update `speckit/project-memory.md` to note 006-tap-to-select complete and new e2e test count
 
 ---
 
