@@ -5,6 +5,12 @@
 **Status**: Draft
 **Input**: User description: "UX Redesign: Scoreboard-style tournament director interface with simplified navigation, inline game recording, and modern sport-broadcast visual design"
 
+## Clarifications
+
+### Session 2026-03-06
+
+- Q: Where is the game log visible on the Live view? → A: Show only a game count on the collapsed card (e.g., "Game 5"), no log table on the Live view. Full game log is available in the History tab.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Live Match Monitoring (Priority: P1)
@@ -18,7 +24,7 @@ The tournament director glances at their phone to see all active matches and the
 **Acceptance Scenarios**:
 
 1. **Given** a tournament with 2 active matches, **When** the director opens the Live view on a phone (375px width), **Then** both match cards are fully visible without scrolling, showing player names and scores in large monospace text.
-2. **Given** an active match at 3–5 of 7, **When** the director views the Live tab, **Then** the score "3 — 5" is the most prominent element on the card, with "of 7" shown smaller beneath.
+2. **Given** an active match at 3–5 of 7 after 4 games played, **When** the director views the Live tab, **Then** the score "3 — 5" is the most prominent element on the card, with "of 7" shown smaller beneath, and a game count (e.g., "Game 5") is visible.
 3. **Given** no active matches, **When** the director views the Live tab, **Then** a clear empty state is shown with the "＋ New Match" button prominently available.
 
 ---
@@ -149,6 +155,7 @@ Starting a new match is done via a "＋ New Match" button that expands an inline
 - **FR-012**: The "＋" add-player button MUST expand an inline input that collapses after adding a player.
 - **FR-013**: A "＋ New Match" button MUST expand an inline form for starting a match, which collapses after submission.
 - **FR-014**: Completed matches MUST appear in a muted section below active matches with a visual indicator distinguishing them from active matches.
+- **FR-025**: Active match cards MUST display a game count (e.g., "Game 5") on the collapsed card. No game log table is shown on the Live view; the full game log is available in the History tab.
 - **FR-015**: The Standings view MUST include a "Live" column showing active match opponent and score for players currently in a match.
 - **FR-016**: The "Live" column MUST clear when a match completes, and Wins/Points columns MUST update accordingly.
 - **FR-017**: 2–3 active match cards MUST be fully visible without scrolling on a 375px-wide viewport.
