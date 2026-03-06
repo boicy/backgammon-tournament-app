@@ -151,12 +151,15 @@ function renderCompletedCard(match, players) {
 }
 
 function rosterListHtml(players) {
-  if (!players.length) return '<p class="live-roster__empty">No players yet.</p>';
-  return players.map((p) => `
+  if (!players.length) return `
+    <div class="live-roster-inner">
+      <p class="live-roster__empty">No players yet.</p>
+    </div>`;
+  return `<div class="live-roster-inner">${players.map((p) => `
     <div class="live-roster__row">
       <span class="live-roster__name">${escapeHtml(p.name)}</span>
       <button class="btn-danger btn-sm" type="button" data-action="remove-player" data-player-id="${escapeHtml(p.id)}">Remove</button>
-    </div>`).join('');
+    </div>`).join('')}</div>`;
 }
 
 function headerHtml(tournament, players) {
