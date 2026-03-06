@@ -36,7 +36,6 @@ As a tournament director, I want to be able to undo a player selection by tappin
 
 1. **Given** both players are selected (confirmation step), **When** the user taps the Player 2 pill, **Then** Player 2 is deselected, the confirmation row disappears, and the prompt returns to "Pick Player 2:" with the pick grid showing.
 2. **Given** both players are selected (confirmation step), **When** the user taps the Player 1 pill, **Then** Player 1 is deselected, Player 2 becomes Player 1, and the prompt returns to "Pick Player 2:".
-3. **Given** only Player 1 is selected (step 2), **When** the user taps the Player 1 selected button, **Then** the selection is cleared and the prompt returns to "Pick Player 1:".
 
 ---
 
@@ -55,7 +54,7 @@ As a tournament director, I want to be able to undo a player selection by tappin
 - **FR-003**: The system MUST follow a 3-step flow: pick Player 1, pick Player 2, confirm and start.
 - **FR-004**: A selected player's button MUST show distinct visual styling (highlighted/filled) and MUST NOT be tappable as a second pick.
 - **FR-005**: After both players are selected, the system MUST display a confirmation row showing both names with "vs" between them, a target score input, and a Start button.
-- **FR-006**: Tapping a selected player (in the confirmation row or the grid) MUST deselect them and return to the appropriate earlier step.
+- **FR-006**: Tapping a selected player pill in the confirmation row MUST deselect them and return to the appropriate earlier step.
 - **FR-007**: Collapsing the form (toggling "+ New Match") MUST reset all selections.
 - **FR-008**: The "+ New Match" button MUST remain disabled when fewer than 2 players are registered (unchanged from current behaviour).
 - **FR-009**: All existing e2e test helpers that start matches MUST be updated to use the new tap-based selection.

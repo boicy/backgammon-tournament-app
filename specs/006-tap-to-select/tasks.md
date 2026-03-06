@@ -83,6 +83,11 @@
     await expect(page.locator('.pick-grid')).toBeVisible();
     await expect(page.locator('.pick-prompt')).toContainText('Pick Player 1');
     await expect(page.locator('[data-action="pick-player"]')).toHaveCount(2);
+
+    // Pick Alice — her button should become disabled (can't pick same player twice)
+    await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
+    await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
+    await expect(page.locator('[data-player-id]').filter({ hasText: 'Alice' })).toBeDisabled();
   });
 
   test('AC2 — picking two players and submitting creates active card', async ({ page }) => {
@@ -374,19 +379,22 @@
 
     await page.locator('[data-action="toggle-new-match"]').click();
     await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
-    await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
-
     await page.locator('[data-action="pick-player"]').filter({ hasText: 'Bob' }).click();
     await expect(page.locator('.pick-confirm')).toBeVisible();
 
-    // Deselect Bob → back to Pick Player 2
+    // Deselect Bob (P2 pill) → back to Pick Player 2
     await page.locator('[data-action="deselect-player"]').filter({ hasText: 'Bob' }).click();
     await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
     await expect(page.locator('.pick-confirm')).not.toBeVisible();
 
-    // Deselect Alice → back to Pick Player 1
+    // Pick Carol as P2 → confirm step with Alice vs Carol
+    await page.locator('[data-action="pick-player"]').filter({ hasText: 'Carol' }).click();
+    await expect(page.locator('.pick-confirm')).toBeVisible();
+
+    // Deselect Alice (P1 pill at confirm) → Carol becomes P1, back to Pick Player 2
     await page.locator('[data-action="deselect-player"]').filter({ hasText: 'Alice' }).click();
-    await expect(page.locator('.pick-prompt')).toContainText('Pick Player 1');
+    await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
+    await expect(page.locator('.pick-confirm')).toContainText('Carol');
   });
   ```
 
@@ -407,9 +415,6 @@
         _selectedP2 = null;
         _pickStep = _selectedP1 ? 2 : 1;
       }
-    } else if (_pickStep === 2 && playerId === _selectedP1) {
-      _selectedP1 = null;
-      _pickStep = 1;
     }
     refreshNewMatchForm();
     return;
