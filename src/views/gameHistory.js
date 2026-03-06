@@ -87,13 +87,22 @@ function rebuildList(container) {
 
 export function render(container) {
   const { matches, players, tournament } = getState();
-  const ctaHtml = !tournament
-    ? '<p class="empty-state"><a href="#/start">Start a tournament</a></p>'
-    : '';
+
+  if (!tournament) {
+    container.innerHTML = `
+      <section class="view view--history" aria-label="Game History">
+        <div class="empty-state-card">
+          <h2>Game History</h2>
+          <p>No tournament running. Start one to record matches and games.</p>
+          <a href="#/start" class="btn btn-primary">Start a Tournament</a>
+        </div>
+      </section>`;
+    return;
+  }
+
   container.innerHTML = `
     <section class="view view--history" aria-label="Game History">
       <h2>Game History</h2>
-      ${ctaHtml}
       <div data-history-list>
         ${historyHtml(matches, players)}
       </div>
