@@ -186,8 +186,13 @@ export function render(container) {
     _selectedSnapshotId = null;
   }
 
+  const ctaHtml = !tournament
+    ? '<p class="club-note"><a href="#/start">Start a tournament</a></p>'
+    : '';
+
   container.innerHTML = `
     <section class="view view--club" aria-label="Club">
+      ${ctaHtml}
       <div class="club-section">
         <div>
           <h2>All-Time Standings</h2>
