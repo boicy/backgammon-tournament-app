@@ -603,6 +603,24 @@ select option {
   max-width: 28ch;
 }
 
+.no-tournament-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.no-tournament-banner p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
 /* ===== Accessibility ===== */
 .visually-hidden {
   position: absolute;

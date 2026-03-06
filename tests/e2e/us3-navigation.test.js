@@ -248,10 +248,22 @@ test('History view: clicking Start a Tournament CTA navigates to start page', as
   await expect(page.locator('.name-prompt')).toBeVisible();
 });
 
-test('Club view shows a start-tournament CTA when no tournament is active', async ({ page }) => {
+test('Club view: no tournament shows banner with CTA above existing content', async ({ page }) => {
   await freshStart(page);
   await page.goto('/#/club');
 
-  // There must be a link or button that takes the user to start a tournament
-  await expect(page.locator('a[href="#/start"], [data-action="start-tournament"]')).toBeVisible();
+  // Banner must be present
+  await expect(page.locator('.no-tournament-banner')).toBeVisible();
+  // CTA link inside banner
+  await expect(page.locator('.no-tournament-banner a[href="#/start"]')).toBeVisible();
+  // Existing content (standings, archive) still visible
+  await expect(page.locator('.club-section')).toBeVisible();
+});
+
+test('Club view: clicking Start a Tournament banner CTA navigates to start page', async ({ page }) => {
+  await freshStart(page);
+  await page.goto('/#/club');
+
+  await page.locator('.no-tournament-banner a[href="#/start"]').click();
+  await expect(page.locator('.name-prompt')).toBeVisible();
 });
