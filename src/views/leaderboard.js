@@ -7,9 +7,28 @@ import { getPairingStatus } from '../models/roundRobin.js';
 // Render helpers
 // ---------------------------------------------------------------------------
 
-function tbodyHtml(standings) {
+function liveCell(playerId, matches, players) {
+  const match = matches.find(
+    (m) => m.status === 'active' && (m.player1Id === playerId || m.player2Id === playerId),
+  );
+  if (!match) return '—';
+
+  const opponentId = match.player1Id === playerId ? match.player2Id : match.player1Id;
+  const opponentName = playerName(players, opponentId);
+
+  let myScore = 0;
+  let oppScore = 0;
+  for (const g of match.games) {
+    if (g.winnerId === playerId) myScore += g.matchPoints;
+    else if (g.winnerId === opponentId) oppScore += g.matchPoints;
+  }
+
+  return `vs ${escapeHtml(opponentName)} ${myScore}–${oppScore}`;
+}
+
+function tbodyHtml(standings, matches = [], players = []) {
   if (standings.length === 0) {
-    return `<tr><td colspan="4" class="empty-state">No players yet — add players to see standings.</td></tr>`;
+    return `<tr><td colspan="5" class="empty-state">No players yet — add players to see standings.</td></tr>`;
   }
   return standings
     .map(
@@ -19,6 +38,7 @@ function tbodyHtml(standings) {
         <td>${escapeHtml(s.name)}</td>
         <td class="pts-cell">${s.matchPoints}</td>
         <td>${s.wins}</td>
+        <td class="live-cell">${liveCell(s.playerId, matches, players)}</td>
       </tr>`,
     )
     .join('');
@@ -69,10 +89,11 @@ export function render(container) {
               <th scope="col">Player</th>
               <th scope="col">Points</th>
               <th scope="col">Match Wins</th>
+              <th scope="col">Live</th>
             </tr>
           </thead>
           <tbody id="standings-body">
-            ${tbodyHtml(standings)}
+            ${tbodyHtml(standings, matches, players)}
           </tbody>
         </table>
       </div>
@@ -88,7 +109,7 @@ export function onMount(container) {
     const tbody = container.querySelector('#standings-body');
     if (!tbody) return;
     const { standings, schedule, matches, players } = getState();
-    tbody.innerHTML = tbodyHtml(standings);
+    tbody.innerHTML = tbodyHtml(standings, matches, players);
     // Also refresh schedule status (matches changed → pairing status may change)
     const wrapper = container.querySelector('#schedule-wrapper');
     if (wrapper) wrapper.innerHTML = schedulePanelHtml(schedule, matches, players);
@@ -102,6 +123,7 @@ export function onMount(container) {
   };
 
   eventBus.on('state:standings:changed', _standingsChangedHandler);
+  eventBus.on('state:matches:changed', _standingsChangedHandler);
   eventBus.on('state:reset', _standingsChangedHandler);
   eventBus.on('state:schedule:changed', _scheduleChangedHandler);
 }
@@ -109,6 +131,7 @@ export function onMount(container) {
 export function onUnmount() {
   if (_standingsChangedHandler) {
     eventBus.off('state:standings:changed', _standingsChangedHandler);
+    eventBus.off('state:matches:changed', _standingsChangedHandler);
     eventBus.off('state:reset', _standingsChangedHandler);
     _standingsChangedHandler = null;
   }

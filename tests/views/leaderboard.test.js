@@ -223,3 +223,112 @@ describe('leaderboard view — live updates', () => {
     container.remove();
   });
 });
+
+// ---------------------------------------------------------------------------
+// T021: US5 — Live column in standings (004-ux-redesign)
+// ---------------------------------------------------------------------------
+
+function setStateWithMatches({ standings = [], players = [], matches = [] } = {}) {
+  mockStore.getState.mockReturnValue({
+    tournament: { id: 't1', name: 'Test', date: new Date().toISOString(), status: 'active' },
+    players,
+    matches,
+    standings,
+    games: [],
+  });
+}
+
+describe('leaderboard view — Live column (US5)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.keys(busHandlers).forEach((k) => delete busHandlers[k]);
+  });
+
+  it('table header includes a Live column', () => {
+    setStateWithMatches();
+    const container = makeContainer();
+    view.render(container);
+    const headers = [...container.querySelectorAll('th')]
+      .map((th) => th.textContent.trim().toLowerCase());
+    expect(headers.some((h) => h.includes('live'))).toBe(true);
+    cleanup(container);
+  });
+
+  it('player in an active match shows "vs [opponent] [score]" in Live column', () => {
+    const players = [
+      { id: 'p1', name: 'Alice' },
+      { id: 'p2', name: 'Bob' },
+    ];
+    const matches = [
+      {
+        id: 'm1',
+        player1Id: 'p1',
+        player2Id: 'p2',
+        targetScore: 7,
+        status: 'active',
+        games: [{ winnerId: 'p1', matchPoints: 1 }],
+      },
+    ];
+    const standings = [
+      { playerId: 'p1', name: 'Alice', matchPoints: 0, wins: 0, losses: 0, gamesPlayed: 0, rank: 1 },
+      { playerId: 'p2', name: 'Bob',   matchPoints: 0, wins: 0, losses: 0, gamesPlayed: 0, rank: 2 },
+    ];
+    setStateWithMatches({ standings, players, matches });
+
+    const container = makeContainer();
+    view.render(container);
+
+    const aliceRow = [...container.querySelectorAll('tbody tr')].find((r) =>
+      r.textContent.includes('Alice')
+    );
+    expect(aliceRow).not.toBeUndefined();
+    // Should contain Bob's name (the opponent) in the Live cell
+    expect(aliceRow.textContent).toContain('Bob');
+    cleanup(container);
+  });
+
+  it('player with no active match shows "—" in Live column', () => {
+    const players = [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }];
+    const standings = [
+      { playerId: 'p1', name: 'Alice', matchPoints: 0, wins: 0, losses: 0, gamesPlayed: 0, rank: 1 },
+    ];
+    setStateWithMatches({ standings, players, matches: [] });
+
+    const container = makeContainer();
+    view.render(container);
+
+    const aliceRow = [...container.querySelectorAll('tbody tr')].find((r) =>
+      r.textContent.includes('Alice')
+    );
+    expect(aliceRow).not.toBeUndefined();
+    expect(aliceRow.textContent).toContain('—');
+    cleanup(container);
+  });
+
+  it('Live column clears when match completes', () => {
+    const players = [
+      { id: 'p1', name: 'Alice' },
+      { id: 'p2', name: 'Bob' },
+    ];
+    const completedMatch = {
+      id: 'm1', player1Id: 'p1', player2Id: 'p2', targetScore: 7,
+      status: 'complete', winnerId: 'p1',
+      games: [{ winnerId: 'p1', matchPoints: 7 }],
+    };
+    const standings = [
+      { playerId: 'p1', name: 'Alice', matchPoints: 7, wins: 1, losses: 0, gamesPlayed: 1, rank: 1 },
+      { playerId: 'p2', name: 'Bob',   matchPoints: 0, wins: 0, losses: 1, gamesPlayed: 1, rank: 2 },
+    ];
+    setStateWithMatches({ standings, players, matches: [completedMatch] });
+
+    const container = makeContainer();
+    view.render(container);
+
+    const aliceRow = [...container.querySelectorAll('tbody tr')].find((r) =>
+      r.textContent.includes('Alice')
+    );
+    // Completed match should NOT show in Live column
+    expect(aliceRow.textContent).not.toContain('vs Bob');
+    cleanup(container);
+  });
+});

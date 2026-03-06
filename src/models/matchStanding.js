@@ -27,7 +27,7 @@ export function deriveMatchStandings(players, matches) {
         .reduce((s, g) => s + g.matchPoints, 0);
     }, 0);
 
-    return { name: player.name, wins, losses, matchPoints };
+    return { playerId: player.id, name: player.name, wins, losses, matchPoints };
   });
 
   // Sort: wins DESC, then matchPoints DESC

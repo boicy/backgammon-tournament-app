@@ -1,72 +1,173 @@
 // Hash-based router.
-// Route format: #/players | #/match | #/leaderboard | #/history | #/start | #/club
+// Route format: #/live | #/leaderboard | #/history | #/start | #/club
+// Legacy redirects: #/players → #/live, #/match → #/live
 
-import { getState } from './store/store.js';
+import { getState, endTournament, resetTournament } from './store/store.js';
 
 const ROUTES = {
-  '/start': () => import('./views/namePrompt.js'),
-  '/players': () => import('./views/matchHub.js'),
-  '/match': () => import('./views/matchDetail.js'),
+  '/start':       () => import('./views/namePrompt.js'),
+  '/live':        () => import('./views/liveView.js'),
   '/leaderboard': () => import('./views/leaderboard.js'),
-  '/history': () => import('./views/gameHistory.js'),
-  '/club': () => import('./views/club.js'),
+  '/history':     () => import('./views/gameHistory.js'),
+  '/club':        () => import('./views/club.js'),
 };
 
 // Routes accessible even without an active tournament
-const UNGUARDED_ROUTES = new Set(['/start', '/club']);
+const UNGUARDED_ROUTES = new Set(['/start', '/club', '/history']);
 
 let container = null;
 let currentView = null;
 
 function getPath() {
   const hash = window.location.hash;
-  if (!hash || hash === '#') return null; // No path specified — caller will decide default
-  // Strip leading '#'
+  if (!hash || hash === '#') return null;
   return hash.startsWith('#') ? hash.slice(1) : hash;
 }
 
 function updateNavHighlight(path) {
-  document.querySelectorAll('nav a').forEach((link) => {
+  document.querySelectorAll('.app-tabs .nav-link').forEach((link) => {
     const href = link.getAttribute('href');
     const linkPath = href && href.startsWith('#') ? href.slice(1) : href;
     link.classList.toggle('active', linkPath === path);
   });
 }
 
+function updateTournamentState() {
+  const hasTournament = getState().tournament !== null;
+  document.body.dataset.hasTournament = hasTournament ? 'true' : 'false';
+
+  // Show/hide tournament-only menu items
+  const divider = document.getElementById('menu-divider-tournament');
+  const endBtn   = document.getElementById('menu-end-tournament');
+  const resetBtn = document.getElementById('menu-reset-tournament');
+  if (divider) divider.hidden = !hasTournament;
+  if (endBtn)   endBtn.hidden = !hasTournament;
+  if (resetBtn) resetBtn.hidden = !hasTournament;
+}
+
+// ---------------------------------------------------------------------------
+// Hamburger menu (implemented here per T014)
+// ---------------------------------------------------------------------------
+
+let _menuOutsideHandler = null;
+
+function openMenu() {
+  const menu = document.getElementById('hamburger-menu');
+  const btn  = document.getElementById('hamburger-btn');
+  if (!menu) return;
+  menu.classList.add('open');
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+
+  // Close on outside click
+  setTimeout(() => {
+    _menuOutsideHandler = (e) => {
+      const wrapper = document.querySelector('.hamburger-menu-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) closeMenu();
+    };
+    document.addEventListener('click', _menuOutsideHandler);
+  }, 0);
+}
+
+function closeMenu() {
+  const menu = document.getElementById('hamburger-menu');
+  const btn  = document.getElementById('hamburger-btn');
+  if (!menu) return;
+  menu.classList.remove('open');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  if (_menuOutsideHandler) {
+    document.removeEventListener('click', _menuOutsideHandler);
+    _menuOutsideHandler = null;
+  }
+}
+
+function initHamburgerMenu() {
+  const btn = document.getElementById('hamburger-btn');
+  if (!btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById('hamburger-menu');
+    if (menu && menu.classList.contains('open')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+
+  // Close menu when a nav link inside it is clicked
+  const menu = document.getElementById('hamburger-menu');
+  if (menu) {
+    menu.addEventListener('click', (e) => {
+      const action = e.target.closest('[data-action]')?.dataset.action;
+
+      if (action === 'end-tournament') {
+        closeMenu();
+        if (window.confirm('End this tournament and save it to the archive?')) {
+          endTournament();
+          window.location.hash = '#/start';
+        }
+        return;
+      }
+
+      if (action === 'reset-tournament') {
+        closeMenu();
+        if (window.confirm('Reset the tournament? All data will be deleted.')) {
+          resetTournament();
+          window.location.hash = '#/start';
+        }
+        return;
+      }
+
+      // Regular nav links — close on click
+      if (e.target.closest('a')) {
+        closeMenu();
+      }
+    });
+  }
+
+  // Close menu when a primary tab is clicked
+  document.querySelectorAll('.app-tabs .nav-link').forEach((link) => {
+    link.addEventListener('click', closeMenu);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Navigation
+// ---------------------------------------------------------------------------
+
 async function navigate() {
   let path = getPath();
 
-  // If no hash in URL, determine default based on tournament state
+  // Legacy and redirect handling
+  if (path === '/players') {
+    history.replaceState(null, '', '#/live');
+    path = '/live';
+  }
+  if (path === '/match' || path === '/record') {
+    history.replaceState(null, '', '#/live');
+    path = '/live';
+  }
+
+  // Default path when no hash
   if (path === null) {
-    path = getState().tournament !== null ? '/players' : '/start';
+    path = getState().tournament !== null ? '/live' : '/start';
     history.replaceState(null, '', `#${path}`);
   }
 
-  // Router guard: if no active tournament, redirect to #/start
-  // (except /start and /club which are valid without a tournament)
+  // Guard: no active tournament → redirect to /start
   if (!UNGUARDED_ROUTES.has(path) && getState().tournament === null) {
     history.replaceState(null, '', '#/start');
     path = '/start';
   }
 
-  // /match guard: if no selectedMatchId, redirect to /players
-  if (path === '/match' && getState().selectedMatchId === null) {
-    history.replaceState(null, '', '#/players');
-    path = '/players';
-  }
+  // Close hamburger menu on any navigation
+  closeMenu();
 
-  // /record is retired — redirect to /players
-  if (path === '/record') {
-    history.replaceState(null, '', '#/players');
-    path = '/players';
-  }
-
-  // Unmount the current view before navigating away
+  // Unmount current view
   if (currentView && typeof currentView.onUnmount === 'function') {
     currentView.onUnmount();
     currentView = null;
   }
-  // Clear stale DOM immediately so assertions don't see old content
   container.innerHTML = '';
 
   const loader = ROUTES[path] || ROUTES['/start'];
@@ -78,6 +179,7 @@ async function navigate() {
       view.onMount(container);
     }
     updateNavHighlight(path);
+    updateTournamentState();
   } catch (err) {
     container.innerHTML = `<p class="error">Failed to load view: ${path}</p>`;
     console.error(err);
@@ -86,8 +188,10 @@ async function navigate() {
 
 export function initRouter(appContainer) {
   container = appContainer;
-
+  initHamburgerMenu();
   window.addEventListener('hashchange', navigate);
-
   navigate();
 }
+
+// Exported so views can call it after End/Reset Tournament actions
+export { updateTournamentState };

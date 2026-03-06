@@ -4,29 +4,33 @@ async function archiveTournamentWith(page, tournamentName, players) {
   await expect(page.locator('.name-prompt')).toBeVisible();
   await page.locator('.name-prompt input[type="text"]').fill(tournamentName);
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
 
   for (const name of players) {
+    await page.locator('[data-action="toggle-add-player"]').click();
     await page.locator('#player-name-input').fill(name);
     await page.locator('#add-player-form button[type="submit"]').click();
-    await expect(page.locator('.player-list .player-name', { hasText: name })).toBeVisible();
+    await page.waitForTimeout(50);
   }
 
   // Record a match between first two players (only possible with 2+ players)
   if (players.length >= 2) {
+    const formVisible = await page.locator('#start-match-form').isVisible().catch(() => false);
+    if (!formVisible) await page.locator('[data-action="toggle-new-match"]').click();
     await page.locator('select[data-start-p1]').selectOption({ label: players[0] });
     await page.locator('select[data-start-p2]').selectOption({ label: players[1] });
     await page.locator('input[data-start-target]').fill('1');
     await page.locator('#start-match-form button[type="submit"]').click();
-    await page.locator('.match-card--active button[data-action="enter-match"]').first().click();
-    await expect(page.locator('.view--match')).toBeVisible();
-    await page.locator('select[data-game-winner]').selectOption({ label: players[0] });
-    await page.locator('button[data-action="record-game"]').click();
-    await page.locator('[data-action="back-to-hub"]').click();
-    await expect(page.locator('.view--match-hub')).toBeVisible();
+    await page.waitForTimeout(50);
+    const card = page.locator('.live-card--active').first();
+    await card.locator('[data-action="record-game"]').click();
+    await card.locator('[data-game-winner]').selectOption({ label: players[0] });
+    await card.locator('[data-action="submit-game"]').click();
+    await page.waitForTimeout(50);
   }
 
   page.once('dialog', (d) => d.accept());
+  await page.locator('#hamburger-btn').click();
   await page.locator('[data-action="end-tournament"]').click();
   await expect(page.locator('.name-prompt')).toBeVisible();
 }
@@ -43,9 +47,10 @@ test('AC1 — after archiving tournament with Alice, typing "Al" shows Alice as 
   // Start new tournament
   await page.locator('.name-prompt input[type="text"]').fill('New Night');
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
 
-  // The datalist should be populated
+  // Expand add-player to check datalist
+  await page.locator('[data-action="toggle-add-player"]').click();
   const datalist = page.locator('#roster-datalist');
   await expect(datalist).toBeAttached();
   const options = await datalist.locator('option').allTextContents();
@@ -57,13 +62,16 @@ test('AC3 — typing a new name not in roster and submitting adds it to the rost
 
   await page.locator('.name-prompt input[type="text"]').fill('New Night');
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
 
   // Add a new player not in the roster
+  await page.locator('[data-action="toggle-add-player"]').click();
   await page.locator('#player-name-input').fill('Charlie');
   await page.locator('#add-player-form button[type="submit"]').click();
+  await page.waitForTimeout(50);
 
-  // Charlie should now be in the datalist
+  // Re-open to check datalist
+  await page.locator('[data-action="toggle-add-player"]').click();
   const datalist = page.locator('#roster-datalist');
   const options = await datalist.locator('option').allTextContents();
   expect(options.some((o) => o.toLowerCase().includes('charlie'))).toBe(true);
@@ -72,8 +80,9 @@ test('AC3 — typing a new name not in roster and submitting adds it to the rost
 test('AC4 — no previous tournaments — no suggestions in datalist', async ({ page }) => {
   await page.locator('.name-prompt input[type="text"]').fill('Fresh Night');
   await page.locator('.name-prompt button[type="submit"]').click();
-  await expect(page.locator('.view--match-hub')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
 
+  await page.locator('[data-action="toggle-add-player"]').click();
   const datalist = page.locator('#roster-datalist');
   await expect(datalist).toBeAttached();
   const options = await datalist.locator('option').all();
