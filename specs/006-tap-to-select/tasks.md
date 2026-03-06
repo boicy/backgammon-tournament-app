@@ -394,7 +394,8 @@
     // Deselect Alice (P1 pill at confirm) → Carol becomes P1, back to Pick Player 2
     await page.locator('[data-action="deselect-player"]').filter({ hasText: 'Alice' }).click();
     await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
-    await expect(page.locator('.pick-confirm')).toContainText('Carol');
+    // At step 2: Carol is now P1, her button is selected and disabled in the grid
+    await expect(page.locator('[data-player-id]').filter({ hasText: 'Carol' })).toBeDisabled();
   });
   ```
 
