@@ -41,7 +41,7 @@ async function playMatchToCompletion(page, { p1Name, p2Name, winner, target = 3 
   const card = page.locator('.live-card--active').filter({ hasText: p1Name });
   for (let i = 0; i < target; i++) {
     await card.locator('[data-action="record-game"]').click();
-    await card.locator('[data-game-winner]').selectOption({ label: winner });
+    await card.locator('[data-action="pick-winner"]').filter({ hasText: winner }).click();
     await card.locator('[data-result-type]').selectOption('standard');
     await card.locator('[data-cube-value]').selectOption('1');
     await card.locator('[data-action="submit-game"]').click();
@@ -89,7 +89,7 @@ test('AC2 — points tiebreaker: same wins but different points', async ({ page 
   const aliceCard = page.locator('.live-card--active').filter({ hasText: 'Alice' }).first();
   for (let i = 0; i < 3; i++) {
     await aliceCard.locator('[data-action="record-game"]').click();
-    await aliceCard.locator('[data-game-winner]').selectOption({ label: 'Alice' });
+    await aliceCard.locator('[data-action="pick-winner"]').filter({ hasText: 'Alice' }).click();
     await aliceCard.locator('[data-result-type]').selectOption('standard');
     await aliceCard.locator('[data-cube-value]').selectOption('1');
     await aliceCard.locator('[data-action="submit-game"]').click();
@@ -106,7 +106,7 @@ test('AC2 — points tiebreaker: same wins but different points', async ({ page 
 
   const carolCard = page.locator('.live-card--active').filter({ hasText: 'Carol' }).first();
   await carolCard.locator('[data-action="record-game"]').click();
-  await carolCard.locator('[data-game-winner]').selectOption({ label: 'Carol' });
+  await carolCard.locator('[data-action="pick-winner"]').filter({ hasText: 'Carol' }).click();
   await carolCard.locator('[data-result-type]').selectOption('gammon');
   await carolCard.locator('[data-cube-value]').selectOption('2');
   await carolCard.locator('[data-action="submit-game"]').click();

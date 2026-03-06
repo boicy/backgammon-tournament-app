@@ -65,8 +65,8 @@ test('AC1 — tapping Record Game expands inline form within the match card', as
   const form = card.locator('[data-game-form]');
   await expect(form).toBeVisible();
 
-  // Form must contain winner select, result type select, cube value select
-  await expect(form.locator('[data-game-winner]')).toBeVisible();
+  // Form must contain two pick-winner buttons, result type select, cube value select
+  await expect(form.locator('[data-action="pick-winner"]').first()).toBeVisible();
   await expect(form.locator('[data-result-type]')).toBeVisible();
   await expect(form.locator('[data-cube-value]')).toBeVisible();
 });
@@ -86,9 +86,8 @@ test('AC2 — submitting a game updates the score and collapses the form', async
   const form = card.locator('[data-game-form]');
   await expect(form).toBeVisible();
 
-  // Select Alice as winner (first option), standard result, cube 1 (defaults)
-  const winnerSelect = card.locator('[data-game-winner]');
-  await winnerSelect.selectOption({ index: 0 }); // player1 = Alice
+  // Select Alice as winner (first button = player1 = Alice), standard result, cube 1 (defaults)
+  await card.locator('[data-action="pick-winner"]').first().click();
 
   // Submit
   await card.locator('[data-action="submit-game"]').click();
@@ -144,7 +143,7 @@ test('AC4 — winning last game transitions card to complete state', async ({ pa
 
   // Expand and record single game (wins the match)
   await activeCard.locator('[data-action="record-game"]').click();
-  await activeCard.locator('[data-game-winner]').selectOption({ index: 0 });
+  await activeCard.locator('[data-action="pick-winner"]').first().click();
   await activeCard.locator('[data-cube-value]').selectOption('4');
   await activeCard.locator('[data-action="submit-game"]').click();
 

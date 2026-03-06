@@ -86,7 +86,7 @@ test('AC3 — Live column clears after match completes', async ({ page }) => {
 
   // Record a game to complete the match (cube=4: standard×4=4pts >= target 3)
   await page.locator('[data-action="record-game"]').first().click();
-  await page.locator('[data-game-winner]').first().selectOption({ index: 0 });
+  await page.locator('[data-action="pick-winner"]').first().click();
   await page.locator('[data-cube-value]').first().selectOption('4');
   await page.locator('[data-action="submit-game"]').first().click();
 

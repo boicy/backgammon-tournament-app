@@ -26,7 +26,7 @@ async function recordGame(page, winnerName, loserName) {
   await page.waitForTimeout(50);
   const card = page.locator('.live-card--active').first();
   await card.locator('[data-action="record-game"]').click();
-  await card.locator('[data-game-winner]').selectOption({ label: winnerName });
+  await card.locator('[data-action="pick-winner"]').filter({ hasText: winnerName }).click();
   await card.locator('[data-cube-value]').selectOption('4');
   await card.locator('[data-action="submit-game"]').click();
   await page.waitForTimeout(50);
