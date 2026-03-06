@@ -223,3 +223,23 @@ test('Reset Tournament discards data and returns to Start state', async ({ page 
   const bodyAttr = await page.locator('body').getAttribute('data-has-tournament');
   expect(bodyAttr).toBe('false');
 });
+
+// ---------------------------------------------------------------------------
+// No tournament + History/Club views → must have CTA to start a tournament
+// ---------------------------------------------------------------------------
+
+test('History view shows a start-tournament CTA when no tournament is active', async ({ page }) => {
+  await freshStart(page);
+  await page.goto('/#/history');
+
+  // There must be a link or button that takes the user to start a tournament
+  await expect(page.locator('a[href="#/start"], [data-action="start-tournament"]')).toBeVisible();
+});
+
+test('Club view shows a start-tournament CTA when no tournament is active', async ({ page }) => {
+  await freshStart(page);
+  await page.goto('/#/club');
+
+  // There must be a link or button that takes the user to start a tournament
+  await expect(page.locator('a[href="#/start"], [data-action="start-tournament"]')).toBeVisible();
+});
