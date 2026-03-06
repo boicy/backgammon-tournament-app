@@ -129,7 +129,7 @@ test('game count shown on active match card after games are played', async ({ pa
 
   // Expand game form and record a game
   await card.locator('[data-action="record-game"]').click();
-  await card.locator('[data-game-winner]').selectOption({ index: 0 });
+  await card.locator('[data-action="pick-winner"]').first().click();
   await card.locator('[data-action="submit-game"]').click();
 
   // After 1 game: should show game count indicator

@@ -23,7 +23,7 @@ async function archiveTournamentWith(page, tournamentName, players) {
     await page.waitForTimeout(50);
     const card = page.locator('.live-card--active').first();
     await card.locator('[data-action="record-game"]').click();
-    await card.locator('[data-game-winner]').selectOption({ label: players[0] });
+    await card.locator('[data-action="pick-winner"]').filter({ hasText: players[0] }).click();
     await card.locator('[data-action="submit-game"]').click();
     await page.waitForTimeout(50);
   }

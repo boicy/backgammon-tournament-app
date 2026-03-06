@@ -129,7 +129,7 @@ test('AC3 — completed match card has green left border accent', async ({ page 
 
   // Record a game to complete the match
   await page.locator('[data-action="record-game"]').first().click();
-  await page.locator('[data-game-winner]').first().selectOption({ index: 0 });
+  await page.locator('[data-action="pick-winner"]').first().click();
   await page.locator('[data-cube-value]').first().selectOption('4');
   await page.locator('[data-action="submit-game"]').first().click();
 
