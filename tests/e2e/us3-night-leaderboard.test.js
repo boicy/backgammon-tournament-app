@@ -31,7 +31,9 @@ async function playMatchToCompletion(page, { p1Name, p2Name, winner, target = 3 
   if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p2Name }).click();
-  await page.locator('input[data-start-target]').fill(String(target));
+  if (target !== 7) {
+    await page.locator('[data-action="pick-target"]').filter({ hasText: new RegExp(`^${target}$`) }).click();
+  }
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
 
@@ -58,7 +60,7 @@ test('AC1 — player with more match wins ranks higher', async ({ page }) => {
   await setupNight(page, { players: ['Alice', 'Bob'] });
 
   // Alice wins one match, Bob wins none
-  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice', target: 1 });
+  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice' });
 
   // Navigate to leaderboard
   await page.goto('/#/leaderboard');
@@ -76,27 +78,29 @@ test('AC1 — player with more match wins ranks higher', async ({ page }) => {
 test('AC2 — points tiebreaker: same wins but different points', async ({ page }) => {
   await setupNight(page, { players: ['Alice', 'Bob', 'Carol', 'Dave'] });
 
-  // Alice vs Bob — Alice wins with 1 standard game (target=1, 1 point)
+  // Alice vs Bob — Alice wins with 3 standard games (target=3, 3 points)
   await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: 'Bob' }).click();
-  await page.locator('input[data-start-target]').fill('1');
+  await page.locator('[data-action="pick-target"]').filter({ hasText: /^3$/ }).click();
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
 
   const aliceCard = page.locator('.live-card--active').filter({ hasText: 'Alice' }).first();
-  await aliceCard.locator('[data-action="record-game"]').click();
-  await aliceCard.locator('[data-game-winner]').selectOption({ label: 'Alice' });
-  await aliceCard.locator('[data-result-type]').selectOption('standard');
-  await aliceCard.locator('[data-cube-value]').selectOption('1');
-  await aliceCard.locator('[data-action="submit-game"]').click();
-  await page.waitForTimeout(50);
+  for (let i = 0; i < 3; i++) {
+    await aliceCard.locator('[data-action="record-game"]').click();
+    await aliceCard.locator('[data-game-winner]').selectOption({ label: 'Alice' });
+    await aliceCard.locator('[data-result-type]').selectOption('standard');
+    await aliceCard.locator('[data-cube-value]').selectOption('1');
+    await aliceCard.locator('[data-action="submit-game"]').click();
+    await page.waitForTimeout(50);
+  }
 
-  // Carol vs Dave — Carol wins with gammon×2 (target=4, one game worth 4 pts)
+  // Carol vs Dave — Carol wins with 1 gammon×2cube game (target=3, 4 pts > 3)
   await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: 'Carol' }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: 'Dave' }).click();
-  await page.locator('input[data-start-target]').fill('4');
+  await page.locator('[data-action="pick-target"]').filter({ hasText: /^3$/ }).click();
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
 
@@ -113,7 +117,7 @@ test('AC2 — points tiebreaker: same wins but different points', async ({ page 
   const rows = page.locator('#standings-body tr');
   const firstRowText = await rows.first().textContent();
   const secondRowText = await rows.nth(1).textContent();
-  // Carol has more points (4 vs 1) so Carol should be rank 1
+  // Carol has more points (4 vs 3) so Carol should be rank 1
   expect(firstRowText).toContain('Carol');
   expect(secondRowText).toContain('Alice');
 });
@@ -125,7 +129,7 @@ test('AC2 — points tiebreaker: same wins but different points', async ({ page 
 test('AC3 — player with zero wins appears at bottom of leaderboard', async ({ page }) => {
   await setupNight(page, { players: ['Alice', 'Bob'] });
 
-  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice', target: 1 });
+  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice' });
 
   await page.goto('/#/leaderboard');
   const rows = page.locator('#standings-body tr');
@@ -150,7 +154,7 @@ test('AC4 — leaderboard updates live when match completes', async ({ page }) =
 
   // Navigate to live view and play a match
   await page.goto('/#/live');
-  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice', target: 1 });
+  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice' });
 
   // Navigate back to leaderboard — Alice should now show as rank 1
   await page.goto('/#/leaderboard');
@@ -166,7 +170,7 @@ test('history view groups games by match with match header', async ({ page }) =>
   await setupNight(page, { players: ['Alice', 'Bob'] });
 
   // Play one match to completion
-  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice', target: 2 });
+  await playMatchToCompletion(page, { p1Name: 'Alice', p2Name: 'Bob', winner: 'Alice' });
 
   // Navigate to history
   await page.goto('/#/history');
@@ -177,6 +181,6 @@ test('history view groups games by match with match header', async ({ page }) =>
   await expect(page.locator('.match-group-header').first()).toContainText('Alice');
   await expect(page.locator('.match-group-header').first()).toContainText('Bob');
 
-  // Should show individual game rows within the group
-  await expect(page.locator('.match-group .history-item')).toHaveCount(2);
+  // Should show individual game rows within the group (default target=3, 3 games)
+  await expect(page.locator('.match-group .history-item')).toHaveCount(3);
 });

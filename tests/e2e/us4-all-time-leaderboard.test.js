@@ -20,12 +20,13 @@ async function recordGame(page, winnerName, loserName) {
   if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: winnerName }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: loserName }).click();
-  await page.locator('input[data-start-target]').fill('1');
+  await page.locator('[data-action="pick-target"]').filter({ hasText: /^3$/ }).click();
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
   const card = page.locator('.live-card--active').first();
   await card.locator('[data-action="record-game"]').click();
   await card.locator('[data-game-winner]').selectOption({ label: winnerName });
+  await card.locator('[data-cube-value]').selectOption('4');
   await card.locator('[data-action="submit-game"]').click();
   await page.waitForTimeout(50);
 }

@@ -41,7 +41,9 @@ async function startMatch(page, { p1Name, p2Name, target = 7 } = {}) {
   if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p2Name }).click();
-  await page.locator('input[data-start-target]').fill(String(target));
+  if (target !== 7) {
+    await page.locator('[data-action="pick-target"]').filter({ hasText: new RegExp(`^${target}$`) }).click();
+  }
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
 }
@@ -122,12 +124,13 @@ test('AC3 — active match card has amber left border accent', async ({ page }) 
 test('AC3 — completed match card has green left border accent', async ({ page }) => {
   await createTournament(page);
   await addPlayers(page, ['Alice', 'Bob']);
-  // target=1 so one game wins the match
-  await startMatch(page, { p1Name: 'Alice', p2Name: 'Bob', target: 1 });
+  // target=3 with cube=4 so one game wins the match (4pts >= 3)
+  await startMatch(page, { p1Name: 'Alice', p2Name: 'Bob', target: 3 });
 
   // Record a game to complete the match
   await page.locator('[data-action="record-game"]').first().click();
   await page.locator('[data-game-winner]').first().selectOption({ index: 0 });
+  await page.locator('[data-cube-value]').first().selectOption('4');
   await page.locator('[data-action="submit-game"]').first().click();
 
   const completedCard = page.locator('.live-card--complete').first();

@@ -42,7 +42,9 @@ async function startMatch(page, { p1Name, p2Name, target = 7 } = {}) {
 
   await page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p2Name }).click();
-  await page.locator('input[data-start-target]').fill(String(target));
+  if (target !== 7) {
+    await page.locator('[data-action="pick-target"]').filter({ hasText: new RegExp(`^${target}$`) }).click();
+  }
   await page.locator('#start-match-form button[type="submit"]').click();
   // Form collapses after starting
   await page.waitForTimeout(50);

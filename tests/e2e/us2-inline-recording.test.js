@@ -37,7 +37,9 @@ async function startMatch(page, { p1Name, p2Name, target = 7 } = {}) {
   if (!expanded) await page.locator('[data-action="toggle-new-match"]').click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p1Name }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: p2Name }).click();
-  await page.locator('input[data-start-target]').fill(String(target));
+  if (target !== 7) {
+    await page.locator('[data-action="pick-target"]').filter({ hasText: new RegExp(`^${target}$`) }).click();
+  }
   await page.locator('#start-match-form button[type="submit"]').click();
   await page.waitForTimeout(50);
 }
@@ -134,8 +136,8 @@ test('AC3 — tapping Record Game again collapses form without recording', async
 
 test('AC4 — winning last game transitions card to complete state', async ({ page }) => {
   await setupTournament(page, { players: ['Alice', 'Bob'] });
-  // Target 1 so the first game wins the match
-  await startMatch(page, { p1Name: 'Alice', p2Name: 'Bob', target: 1 });
+  // Target 3 with cube=4 so the first game wins the match (4pts >= 3)
+  await startMatch(page, { p1Name: 'Alice', p2Name: 'Bob', target: 3 });
 
   const activeCard = page.locator('.live-card--active').first();
   await expect(activeCard).toBeVisible();
@@ -143,6 +145,7 @@ test('AC4 — winning last game transitions card to complete state', async ({ pa
   // Expand and record single game (wins the match)
   await activeCard.locator('[data-action="record-game"]').click();
   await activeCard.locator('[data-game-winner]').selectOption({ index: 0 });
+  await activeCard.locator('[data-cube-value]').selectOption('4');
   await activeCard.locator('[data-action="submit-game"]').click();
 
   // Card should now be in complete section

@@ -46,9 +46,9 @@ index.html, styles.css, package.json, vitest.config.js
 - TDD: tests MUST be written and observed to fail before implementation
 
 ## Recent Changes
+- 007-tap-target-select: Added Vanilla JavaScript ES2022+ (native ES modules) + None (production). Vitest 3.x + Playwright (dev only)
 - 006-tap-to-select: Added Vanilla JavaScript ES2022+ (native ES modules) + None (production). Vitest 3.x + Playwright (dev only)
 - 005-roster-visibility: Added Vanilla JavaScript ES2022+ + None (production)
-- 004-ux-redesign: Added Vanilla JavaScript ES2022+ (native ES modules), HTML5, CSS3 + None (production). Vitest 3.x + Playwright (dev only)
 
 
 <!-- MANUAL ADDITIONS START -->

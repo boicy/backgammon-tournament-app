@@ -368,6 +368,35 @@ describe('liveView — new match form', () => {
     expect(pickBtns.length).toBeGreaterThanOrEqual(2);
     cleanup(container);
   });
+
+  it('confirm step renders 10 pick-target buttons with 7 pre-selected', () => {
+    const container = makeContainer();
+    setState({
+      players: [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }],
+      matches: [],
+    });
+    view.render(container);
+    view.onMount(container);
+
+    // Open the form and advance to confirm step by clicking both players
+    const toggleBtn = container.querySelector('[data-action="toggle-new-match"]');
+    if (toggleBtn && !toggleBtn.disabled) toggleBtn.click();
+    // Re-query after each click because refreshNewMatchForm() replaces the DOM
+    container.querySelectorAll('[data-action="pick-player"]')[0]?.click(); // pick P1
+    container.querySelectorAll('[data-action="pick-player"]')[0]?.click(); // pick P2 → confirm step
+
+    const targetBtns = container.querySelectorAll('[data-action="pick-target"]');
+    expect(targetBtns.length).toBe(10);
+
+    const selected = [...targetBtns].filter((b) => b.classList.contains('pick-btn--selected'));
+    expect(selected.length).toBe(1);
+    expect(selected[0].dataset.targetValue).toBe('7');
+
+    const noNumberInput = container.querySelector('input[data-start-target]');
+    expect(noNumberInput).toBeNull();
+
+    cleanup(container);
+  });
 });
 
 // ---------------------------------------------------------------------------
