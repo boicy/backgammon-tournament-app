@@ -186,8 +186,16 @@ export function render(container) {
     _selectedSnapshotId = null;
   }
 
+  const bannerHtml = !tournament
+    ? `<div class="no-tournament-banner">
+        <p>No active tournament.</p>
+        <a href="#/start" class="btn btn-primary btn-sm">Start a Tournament</a>
+      </div>`
+    : '';
+
   container.innerHTML = `
     <section class="view view--club" aria-label="Club">
+      ${bannerHtml}
       <div class="club-section">
         <div>
           <h2>All-Time Standings</h2>

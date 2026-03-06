@@ -48,7 +48,7 @@ test('AC1 — active tournament shows Live and Standings tabs plus hamburger but
 // AC2: ☰ menu contains expected items
 // ---------------------------------------------------------------------------
 
-test('AC2 — hamburger menu contains History, Club, divider, End Tournament, Reset Tournament', async ({ page }) => {
+test('AC2 — hamburger menu contains Live, Standings, History, Club, divider, End Tournament, Reset Tournament', async ({ page }) => {
   await createTournament(page);
 
   // Open menu
@@ -56,12 +56,15 @@ test('AC2 — hamburger menu contains History, Club, divider, End Tournament, Re
   const menu = page.locator('#hamburger-menu');
   await expect(menu).toBeVisible();
 
-  // Check items
+  // Check all items
+  await expect(menu.locator('a[href="#/live"]')).toBeVisible();
+  await expect(menu.locator('a[href="#/leaderboard"]')).toBeVisible();
   await expect(menu.locator('a[href="#/history"]')).toBeVisible();
   await expect(menu.locator('a[href="#/club"]')).toBeVisible();
   await expect(menu.locator('[data-action="end-tournament"]')).toBeVisible();
   await expect(menu.locator('[data-action="reset-tournament"]')).toBeVisible();
-  // Divider between nav links and tournament actions
+  // Dividers
+  await expect(menu.locator('#menu-divider-primary')).toBeVisible();
   await expect(menu.locator('#menu-divider-tournament')).toBeVisible();
 });
 
@@ -97,6 +100,10 @@ test('AC3 — no tournament hides Live/Standings tabs, menu has only History and
   // But History and Club should be present
   await expect(menu.locator('a[href="#/history"]')).toBeVisible();
   await expect(menu.locator('a[href="#/club"]')).toBeVisible();
+  // Live, Standings, and primary divider should be hidden
+  await expect(menu.locator('#menu-live')).not.toBeVisible();
+  await expect(menu.locator('#menu-standings')).not.toBeVisible();
+  await expect(menu.locator('#menu-divider-primary')).not.toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -167,6 +174,42 @@ test('edge case — hamburger menu closes when Live tab is clicked', async ({ pa
 // Reset Tournament → does NOT archive, returns to Start state
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Back navigation from History / Club via hamburger menu
+// ---------------------------------------------------------------------------
+
+test('hamburger menu Live link navigates back to live view from History', async ({ page }) => {
+  await createTournament(page);
+
+  // Navigate to History via menu
+  await page.locator('#hamburger-btn').click();
+  await page.locator('#hamburger-menu a[href="#/history"]').click();
+  await expect(page).toHaveURL(/\#\/history/);
+
+  // Use menu to go back to Live
+  await page.locator('#hamburger-btn').click();
+  await page.locator('#menu-live').click();
+  await expect(page.locator('.view--live')).toBeVisible();
+});
+
+test('hamburger menu Standings link navigates back from Club', async ({ page }) => {
+  await createTournament(page);
+
+  // Navigate to Club via menu
+  await page.locator('#hamburger-btn').click();
+  await page.locator('#hamburger-menu a[href="#/club"]').click();
+  await expect(page).toHaveURL(/\#\/club/);
+
+  // Use menu to go to Standings
+  await page.locator('#hamburger-btn').click();
+  await page.locator('#menu-standings').click();
+  await expect(page).toHaveURL(/\#\/leaderboard/);
+});
+
+// ---------------------------------------------------------------------------
+// Reset Tournament → does NOT archive, returns to Start state
+// ---------------------------------------------------------------------------
+
 test('Reset Tournament discards data and returns to Start state', async ({ page }) => {
   await createTournament(page, 'Night to Reset');
 
@@ -179,4 +222,48 @@ test('Reset Tournament discards data and returns to Start state', async ({ page 
 
   const bodyAttr = await page.locator('body').getAttribute('data-has-tournament');
   expect(bodyAttr).toBe('false');
+});
+
+// ---------------------------------------------------------------------------
+// No tournament + History/Club views → must have CTA to start a tournament
+// ---------------------------------------------------------------------------
+
+test('History view: no tournament shows full empty state with heading and CTA button', async ({ page }) => {
+  await freshStart(page);
+  await page.goto('/#/history');
+
+  // Full empty-state card must be present
+  await expect(page.locator('.empty-state-card')).toBeVisible();
+  // CTA link styled as button must be visible
+  await expect(page.locator('.empty-state-card a[href="#/start"]')).toBeVisible();
+  // Regular history content must NOT be present
+  await expect(page.locator('[data-history-list]')).not.toBeVisible();
+});
+
+test('History view: clicking Start a Tournament CTA navigates to start page', async ({ page }) => {
+  await freshStart(page);
+  await page.goto('/#/history');
+
+  await page.locator('.empty-state-card a[href="#/start"]').click();
+  await expect(page.locator('.name-prompt')).toBeVisible();
+});
+
+test('Club view: no tournament shows banner with CTA above existing content', async ({ page }) => {
+  await freshStart(page);
+  await page.goto('/#/club');
+
+  // Banner must be present
+  await expect(page.locator('.no-tournament-banner')).toBeVisible();
+  // CTA link inside banner
+  await expect(page.locator('.no-tournament-banner a[href="#/start"]')).toBeVisible();
+  // Existing content (standings, archive) still visible
+  await expect(page.locator('.club-section')).toBeVisible();
+});
+
+test('Club view: clicking Start a Tournament banner CTA navigates to start page', async ({ page }) => {
+  await freshStart(page);
+  await page.goto('/#/club');
+
+  await page.locator('.no-tournament-banner a[href="#/start"]').click();
+  await expect(page.locator('.name-prompt')).toBeVisible();
 });
