@@ -9,6 +9,8 @@ Auto-generated from all feature plans. Last updated: 2026-03-04
 - `localStorage` — five existing keys; one new key `backgammon:matches` (003-match-mode)
 - Vanilla JavaScript ES2022+ (native ES modules), HTML5, CSS3 + None (production). Vitest 3.x + Playwright (dev only) (004-ux-redesign)
 - `localStorage` — 6 existing keys, no changes (004-ux-redesign)
+- Vanilla JavaScript ES2022+ + None (production) (005-roster-visibility)
+- No changes — players already in `localStorage` via `backgammon:players` (005-roster-visibility)
 
 - HTML5 / CSS3 / Vanilla JavaScript (ES2022+) + None (production). Vitest 3.x (dev only, for TDD). (001-tournament-tracker)
 
@@ -42,9 +44,9 @@ index.html, styles.css, package.json, vitest.config.js
 - TDD: tests MUST be written and observed to fail before implementation
 
 ## Recent Changes
+- 005-roster-visibility: Added Vanilla JavaScript ES2022+ + None (production)
 - 004-ux-redesign: Added Vanilla JavaScript ES2022+ (native ES modules), HTML5, CSS3 + None (production). Vitest 3.x + Playwright (dev only)
 - 003-match-mode: Added Vanilla JavaScript ES2022+, HTML5, CSS3 + None (production); Vitest 3.x + Playwright (dev)
-- 002-tournament-history: Added HTML5 / CSS3 / Vanilla JavaScript (ES2022+) + None (production). Vitest 3.x (dev only) — unchanged.
 
 
 <!-- MANUAL ADDITIONS START -->

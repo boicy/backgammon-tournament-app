@@ -93,6 +93,21 @@ test('AC3 — tapping player count expands roster with Remove buttons', async ({
 // AC4: Tap player count again collapses roster
 // ---------------------------------------------------------------------------
 
+test('AC3b — expanded roster shows each player name as text', async ({ page }) => {
+  await createTournament(page);
+  await addPlayer(page, 'Alice');
+  await addPlayer(page, 'Bob');
+
+  await page.locator('[data-action="toggle-roster"]').click();
+  const roster = page.locator('.live-roster');
+  await expect(roster.locator('.live-roster__name').filter({ hasText: 'Alice' })).toBeVisible();
+  await expect(roster.locator('.live-roster__name').filter({ hasText: 'Bob' })).toBeVisible();
+});
+
+// ---------------------------------------------------------------------------
+// AC4: Tap player count again collapses roster
+// ---------------------------------------------------------------------------
+
 test('AC4 — tapping player count again collapses the roster', async ({ page }) => {
   await createTournament(page);
   await addPlayer(page, 'Alice');
