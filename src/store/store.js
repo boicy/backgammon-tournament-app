@@ -180,11 +180,14 @@ export function startMatch(player1Id, player2Id, targetScore) {
     throw new Error('Target score must be at least 1');
   }
 
-  // FR-012: neither player may be in an active match
-  const busyPlayer = state.matches.find(
-    (m) => m.status === 'active' && (m.player1Id === player1Id || m.player2Id === player1Id || m.player1Id === player2Id || m.player2Id === player2Id),
+  // FR-004: prevent duplicate active match between the same player pair
+  const duplicateMatch = state.matches.find(
+    (m) => m.status === 'active' && (
+      (m.player1Id === player1Id && m.player2Id === player2Id) ||
+      (m.player1Id === player2Id && m.player2Id === player1Id)
+    ),
   );
-  if (busyPlayer) throw new Error('Player already in an active match');
+  if (duplicateMatch) throw new Error('An active match between these players already exists');
 
   const match = createMatch(player1Id, player2Id, targetScore);
   state.matches = [...state.matches, match];

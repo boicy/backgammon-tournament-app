@@ -199,7 +199,7 @@ function activeMatchesHtml(matches, players) {
   return active.map((m) => renderMatchCard(m, players, _expandedCardId === m.id)).join('');
 }
 
-function newMatchFormHtml(players) {
+function newMatchFormHtml(players, matches = []) {
   const canStart = players.length >= 2;
 
   if (!_newMatchExpanded) {
@@ -245,7 +245,11 @@ function newMatchFormHtml(players) {
     const cls = isSelected ? 'pick-btn pick-btn--selected' : 'pick-btn';
     const action = isSelected ? 'deselect-player' : 'pick-player';
     const disabled = isSelected && _pickStep === 2 ? ' disabled' : '';
-    return `<button class="${cls}" type="button" data-action="${action}" data-player-id="${escapeHtml(p.id)}"${disabled}>${escapeHtml(p.name)}</button>`;
+    const activeCount = matches.filter(
+      (m) => m.status === 'active' && (m.player1Id === p.id || m.player2Id === p.id),
+    ).length;
+    const badge = activeCount > 0 ? `<span class="pick-btn__badge">${activeCount}</span>` : '';
+    return `<button class="${cls}" type="button" data-action="${action}" data-player-id="${escapeHtml(p.id)}"${disabled}>${escapeHtml(p.name)}${badge}</button>`;
   }).join('');
 
   return `
@@ -273,7 +277,7 @@ function viewHtml(state) {
   return `
     <section class="view view--live">
       ${headerHtml(tournament, players)}
-      ${newMatchFormHtml(players)}
+      ${newMatchFormHtml(players, matches)}
       <div class="live-active-zone">
         ${activeMatchesHtml(matches, players)}
       </div>
@@ -307,9 +311,9 @@ function refreshHeader() {
 
 function refreshNewMatchForm() {
   if (!_container) return;
-  const { players } = getState();
+  const { players, matches } = getState();
   const zone = _container.querySelector('.live-new-match');
-  if (zone) zone.outerHTML = newMatchFormHtml(players);
+  if (zone) zone.outerHTML = newMatchFormHtml(players, matches);
 }
 
 // ---------------------------------------------------------------------------
