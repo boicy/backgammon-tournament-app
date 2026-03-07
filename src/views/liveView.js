@@ -92,8 +92,8 @@ function gameFormHtml(match, players) {
           <option value="64">64</option>
         </select>
       </label>
-      <button class="btn-primary" type="button" data-action="submit-game" data-match-id="${escapeHtml(match.id)}">Save</button>
-      <button class="btn-secondary" type="button" data-action="record-game" data-match-id="${escapeHtml(match.id)}">Cancel</button>
+      <button class="btn btn-primary btn-full" type="button" data-action="submit-game" data-match-id="${escapeHtml(match.id)}">Save</button>
+      <button class="btn btn-secondary btn-full" type="button" data-action="record-game" data-match-id="${escapeHtml(match.id)}">Cancel</button>
     </div>`;
 }
 
@@ -118,7 +118,7 @@ function renderMatchCard(match, players, expanded) {
         <span class="live-card__player live-card__player--right">${name2}</span>
       </div>
       <div class="live-card__actions">
-        <button class="btn-primary btn-sm" type="button" data-action="record-game" data-match-id="${escapeHtml(match.id)}">
+        <button class="btn btn-primary btn-full" type="button" data-action="record-game" data-match-id="${escapeHtml(match.id)}">
           Record Game
         </button>
         <button class="live-card__overflow-btn" type="button" data-action="open-overflow" data-match-id="${escapeHtml(match.id)}" aria-label="More options">⋯</button>
@@ -160,7 +160,7 @@ function rosterListHtml(players) {
   return `<div class="live-roster-inner">${players.map((p) => `
     <div class="live-roster__row">
       <span class="live-roster__name">${escapeHtml(p.name)}</span>
-      <button class="btn-danger btn-sm" type="button" data-action="remove-player" data-player-id="${escapeHtml(p.id)}">Remove</button>
+      <button class="btn btn-danger btn-sm" type="button" data-action="remove-player" data-player-id="${escapeHtml(p.id)}">Remove</button>
     </div>`).join('')}</div>`;
 }
 
@@ -183,7 +183,7 @@ function headerHtml(tournament, players) {
           <form id="add-player-form" class="live-add-player__form">
             <input id="player-name-input" class="live-form__input" type="text" placeholder="Player name" autocomplete="off" list="roster-datalist" required>
             <datalist id="roster-datalist"></datalist>
-            <button class="btn-primary btn-sm" type="submit">Add</button>
+            <button class="btn btn-primary btn-full" type="submit">Add</button>
           </form>
           <div data-error class="live-error" aria-live="polite"></div>
         ` : ''}
@@ -205,7 +205,7 @@ function newMatchFormHtml(players) {
   if (!_newMatchExpanded) {
     return `
       <div class="live-new-match">
-        <button class="live-new-match__toggle btn-secondary" type="button" data-action="toggle-new-match" ${canStart ? '' : 'disabled'}>
+        <button class="live-new-match__toggle btn btn-secondary btn-full" type="button" data-action="toggle-new-match" ${canStart ? '' : 'disabled'}>
           ＋ New Match
         </button>
       </div>`;
@@ -221,7 +221,7 @@ function newMatchFormHtml(players) {
     }).join('');
     return `
       <div class="live-new-match live-new-match--expanded">
-        <button class="live-new-match__toggle btn-secondary" type="button" data-action="toggle-new-match">
+        <button class="live-new-match__toggle btn btn-secondary btn-full" type="button" data-action="toggle-new-match">
           ＋ New Match
         </button>
         <div class="pick-panel">
@@ -232,7 +232,7 @@ function newMatchFormHtml(players) {
           </div>
           <form id="start-match-form" class="pick-start-form">
             <div class="pick-target-grid">${targetButtonsHtml}</div>
-            <button class="btn-primary" type="submit">Start</button>
+            <button class="btn btn-primary btn-full" type="submit">Start</button>
             <div data-match-error class="live-error" aria-live="polite"></div>
           </form>
         </div>
@@ -250,7 +250,7 @@ function newMatchFormHtml(players) {
 
   return `
     <div class="live-new-match live-new-match--expanded">
-      <button class="live-new-match__toggle btn-secondary" type="button" data-action="toggle-new-match">
+      <button class="live-new-match__toggle btn btn-secondary btn-full" type="button" data-action="toggle-new-match">
         ＋ New Match
       </button>
       <div class="pick-panel">
@@ -520,7 +520,7 @@ export function onMount(container) {
           <form id="add-player-form" class="live-add-player__form">
             <input id="player-name-input" class="live-form__input" type="text" placeholder="Player name" autocomplete="off" list="roster-datalist" required>
             <datalist id="roster-datalist">${rosterOpts}</datalist>
-            <button class="btn-primary btn-sm" type="submit">Add</button>
+            <button class="btn btn-primary btn-full" type="submit">Add</button>
           </form>
           <div data-error class="live-error" aria-live="polite"></div>
         ` : '';

@@ -20,7 +20,7 @@
 
 **Purpose**: Confirm baseline state before making changes.
 
-- [ ] T001 Serve app locally with `npx serve .` and confirm it loads without errors; verify all three views (Live, History, Club) are accessible before touching any files
+- [x] T001Serve app locally with `npx serve .` and confirm it loads without errors; verify all three views (Live, History, Club) are accessible before touching any files
 
 ---
 
@@ -35,7 +35,7 @@
 > **Write these tests first, run via Playwright MCP, and confirm they FAIL before implementing T003–T008.**
 > On any test failure during this phase, save artifacts: `browser_take_screenshot` → `./artifacts/screenshots/<timestamp>-failure.png` and `browser_console_messages` → `./artifacts/console/<timestamp>.log`
 
-- [ ] T002 [US1] Write Playwright e2e tests for all US1 acceptance scenarios in `tests/e2e/us9-button-size.test.js`:
+- [x] T002 [US1] Write Playwright e2e tests for all US1 acceptance scenarios in `tests/e2e/us9-button-size.test.js`:
   - Navigate to Live view; start a tournament with 2 players; expand Add Player form
   - Assert Save/Add submit button has `btn` class: `expect(await locator.getAttribute('class')).toContain('btn')`
   - Assert Save/Add submit button has `btn-full` class
@@ -47,14 +47,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] In `src/views/liveView.js` renderGameForm (~line 95): change `class="btn-primary"` → `class="btn btn-primary btn-full"` on the Save button; change `class="btn-secondary"` → `class="btn btn-secondary btn-full"` on the Cancel button
-- [ ] T004 [US1] In `src/views/liveView.js` renderActiveCard (~line 121): change `class="btn-primary btn-sm"` → `class="btn btn-primary btn-full"` on the Record Game toggle button (remove `btn-sm`)
-- [ ] T005 [US1] In `src/views/liveView.js` roster render (~line 163): change `class="btn-danger btn-sm"` → `class="btn btn-danger btn-sm"` on the Remove player button (retain `btn-sm` for inline list use)
-- [ ] T006 [US1] In `src/views/liveView.js` Add Player form (~lines 186 and 523, both render paths): change `class="btn-primary btn-sm"` → `class="btn btn-primary btn-full"` (remove `btn-sm`)
-- [ ] T007 [US1] In `src/views/liveView.js` New Match toggle (~lines 208, 224, 253, all three expanded/collapsed render paths): change `class="live-new-match__toggle btn-secondary"` → `class="live-new-match__toggle btn btn-secondary btn-full"`
-- [ ] T008 [US1] In `src/views/liveView.js` Start Match submit (confirm step, ~line 235): change `class="btn-primary"` → `class="btn btn-primary btn-full"`
-- [ ] T020 [US1] In `src/views/namePrompt.js` (~line 27): add `btn-full` to the Start tournament submit button — change `class="btn btn-primary"` → `class="btn btn-primary btn-full"` (app-wide scope per FR-001)
-- [ ] T009 [US1] Run US1 e2e tests via Playwright MCP (`browser_navigate` to `http://localhost:3000`, interact to expand each form section, run assertions); confirm all US1 tests pass and capture a full-page screenshot of the Live view showing consistent button sizes
+- [x] T003 [US1] In `src/views/liveView.js` renderGameForm (~line 95): change `class="btn-primary"` → `class="btn btn-primary btn-full"` on the Save button; change `class="btn-secondary"` → `class="btn btn-secondary btn-full"` on the Cancel button
+- [x] T004 [US1] In `src/views/liveView.js` renderActiveCard (~line 121): change `class="btn-primary btn-sm"` → `class="btn btn-primary btn-full"` on the Record Game toggle button (remove `btn-sm`)
+- [x] T005 [US1] In `src/views/liveView.js` roster render (~line 163): change `class="btn-danger btn-sm"` → `class="btn btn-danger btn-sm"` on the Remove player button (retain `btn-sm` for inline list use)
+- [x] T006 [US1] In `src/views/liveView.js` Add Player form (~lines 186 and 523, both render paths): change `class="btn-primary btn-sm"` → `class="btn btn-primary btn-full"` (remove `btn-sm`)
+- [x] T007 [US1] In `src/views/liveView.js` New Match toggle (~lines 208, 224, 253, all three expanded/collapsed render paths): change `class="live-new-match__toggle btn-secondary"` → `class="live-new-match__toggle btn btn-secondary btn-full"`
+- [x] T008 [US1] In `src/views/liveView.js` Start Match submit (confirm step, ~line 235): change `class="btn-primary"` → `class="btn btn-primary btn-full"`
+- [x] T020 [US1] In `src/views/namePrompt.js` (~line 27): add `btn-full` to the Start tournament submit button — change `class="btn btn-primary"` → `class="btn btn-primary btn-full"` (app-wide scope per FR-001)
+- [x] T009 [US1] Run US1 e2e tests via Playwright MCP (`browser_navigate` to `http://localhost:3000`, interact to expand each form section, run assertions); confirm all US1 tests pass and capture a full-page screenshot of the Live view showing consistent button sizes
 
 **Checkpoint**: All action buttons on the Live view are the same height, same padding, and full-width. User Story 1 is independently verified.
 
@@ -70,7 +70,7 @@
 
 > **Write these tests first, run via Playwright MCP, and confirm they FAIL before implementing T011–T014.**
 
-- [ ] T010 [US2] Write Playwright e2e tests for all US2 acceptance scenarios in `tests/e2e/us9-button-rounding.test.js`:
+- [x] T010 [US2] Write Playwright e2e tests for all US2 acceptance scenarios in `tests/e2e/us9-button-rounding.test.js`:
   - Navigate to Live view with 2 players
   - Assert that `.btn` (any action button) has computed `border-radius` ≥ 100px (pill): `page.evaluate(() => parseFloat(getComputedStyle(el).borderRadius) > 100)`
   - Assert that `.pick-btn` (player pick button in grid) has the same computed border-radius as `.btn`
@@ -80,12 +80,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] In `styles.css` `:root` Radii block (after `--radius-lg: 12px`): add `--radius-pill: 9999px;`
-- [ ] T012 [US2] In `styles.css` `.btn` selector (~line 307): change `border-radius: var(--radius-md)` → `border-radius: var(--radius-pill)` (depends on T011)
-- [ ] T013 [US2] In `styles.css` `.pick-btn` selector (~line 1809): change `border-radius: var(--radius-md)` → `border-radius: var(--radius-pill)` (depends on T011)
-- [ ] T014 [US2] In `styles.css` `.pick-pill` selector (~line 1851): change `border-radius: var(--radius-md)` → `border-radius: var(--radius-pill)` (depends on T011)
-- [ ] T019 [US2] In `styles.css` `.live-card__overflow-btn` selector (~line 1652): change `border-radius: var(--radius-sm)` → `border-radius: var(--radius-pill)` so the overflow trigger (⋯) matches the pill rounding of all other controls (depends on T011)
-- [ ] T015 [US2] Run US2 e2e tests via Playwright MCP; confirm all US2 tests pass; capture full-page screenshot of Live view in pick-player step showing pill-shaped buttons matching lozenge style
+- [x] T011 [US2] In `styles.css` `:root` Radii block (after `--radius-lg: 12px`): add `--radius-pill: 9999px;`
+- [x] T012 [US2] In `styles.css` `.btn` selector (~line 307): change `border-radius: var(--radius-md)` → `border-radius: var(--radius-pill)` (depends on T011)
+- [x] T013 [US2] In `styles.css` `.pick-btn` selector (~line 1809): change `border-radius: var(--radius-md)` → `border-radius: var(--radius-pill)` (depends on T011)
+- [x] T014 [US2] In `styles.css` `.pick-pill` selector (~line 1851): change `border-radius: var(--radius-md)` → `border-radius: var(--radius-pill)` (depends on T011)
+- [x] T019 [US2] In `styles.css` `.live-card__overflow-btn` selector (~line 1652): change `border-radius: var(--radius-sm)` → `border-radius: var(--radius-pill)` so the overflow trigger (⋯) matches the pill rounding of all other controls (depends on T011)
+- [x] T015 [US2] Run US2 e2e tests via Playwright MCP; confirm all US2 tests pass; capture full-page screenshot of Live view in pick-player step showing pill-shaped buttons matching lozenge style
 
 **Checkpoint**: All tappable controls have pill-shaped rounding visually matching the player name lozenges. User Story 2 is independently verified.
 
@@ -95,9 +95,9 @@
 
 **Purpose**: Full regression, mobile viewport verification, and visual review across all views.
 
-- [ ] T016 Run the full Playwright e2e suite (`npx playwright test`) via Playwright MCP; confirm all 119 existing tests still pass; if any fail, capture artifacts (`browser_take_screenshot` → `./artifacts/screenshots/<timestamp>-failure.png`, `browser_console_messages` → `./artifacts/console/<timestamp>.log`) before investigating
-- [ ] T017 Playwright MCP — use `browser_resize` to set viewport to 320×667; navigate through Live, History, and Club views; capture full-page screenshots via `browser_take_screenshot`; verify no button overflow, clipping, or unreadable text
-- [ ] T018 Playwright MCP — navigate to Live view with an active match; use `browser_take_screenshot` (fullPage) to capture the final consistent button layout as a reference screenshot; save to `./artifacts/screenshots/009-final-live-view.png`
+- [x] T016 Run the full Playwright e2e suite (`npx playwright test`) via Playwright MCP; confirm all 119 existing tests still pass; if any fail, capture artifacts (`browser_take_screenshot` → `./artifacts/screenshots/<timestamp>-failure.png`, `browser_console_messages` → `./artifacts/console/<timestamp>.log`) before investigating
+- [x] T017 Playwright MCP — use `browser_resize` to set viewport to 320×667; navigate through Live, History, and Club views; capture full-page screenshots via `browser_take_screenshot`; verify no button overflow, clipping, or unreadable text
+- [x] T018 Playwright MCP — navigate to Live view with an active match; use `browser_take_screenshot` (fullPage) to capture the final consistent button layout as a reference screenshot; save to `./artifacts/screenshots/009-final-live-view.png`
 
 ---
 
