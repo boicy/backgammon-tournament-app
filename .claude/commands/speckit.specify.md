@@ -36,37 +36,22 @@ Given that feature description, do this:
      - "Create a dashboard for analytics" → "analytics-dashboard"
      - "Fix payment processing timeout bug" → "fix-payment-timeout"
 
-2. **Check for existing branches before creating new one**:
+2. **Create the branch and spec scaffold**:
 
-   a. First, fetch all remote branches to ensure we have the latest information:
+   Run the script — it handles fetching remotes and finding the globally highest branch number automatically:
 
-      ```bash
-      git fetch --all --prune
-      ```
+   ```bash
+   .specify/scripts/bash/create-new-feature.sh --json --short-name "your-short-name" "Feature description"
+   ```
 
-   b. Find the highest feature number across all sources for the short-name:
-      - Remote branches: `git ls-remote --heads origin | grep -E 'refs/heads/[0-9]+-<short-name>$'`
-      - Local branches: `git branch | grep -E '^[* ]*[0-9]+-<short-name>$'`
-      - Specs directories: Check for directories matching `specs/[0-9]+-<short-name>`
-
-   c. Determine the next available number:
-      - Extract all numbers from all three sources
-      - Find the highest number N
-      - Use N+1 for the new branch number
-
-   d. Run the script `.specify/scripts/bash/create-new-feature.sh --json "$ARGUMENTS"` with the calculated number and short-name:
-      - Pass `--number N+1` and `--short-name "your-short-name"` along with the feature description
-      - Bash example: `.specify/scripts/bash/create-new-feature.sh --json "$ARGUMENTS" --json --number 5 --short-name "user-auth" "Add user authentication"`
-      - PowerShell example: `.specify/scripts/bash/create-new-feature.sh --json "$ARGUMENTS" -Json -Number 5 -ShortName "user-auth" "Add user authentication"`
+   - Replace `"your-short-name"` with the 2–4 word name generated in step 1
+   - Replace `"Feature description"` with the full user input from `$ARGUMENTS`
+   - For single quotes in args like `I'm Groot`, escape them: `'I'\''m Groot'` (or double-quote: `"I'm Groot"`)
 
    **IMPORTANT**:
-   - Check all three sources (remote branches, local branches, specs directories) to find the highest number
-   - Only match branches/directories with the exact short-name pattern
-   - If no existing branches/directories found with this short-name, start with number 1
+   - Do NOT pass `--number` — the script calculates the globally correct next number from all branches and specs directories
    - You must only ever run this script once per feature
-   - The JSON is provided in the terminal as output - always refer to it to get the actual content you're looking for
-   - The JSON output will contain BRANCH_NAME and SPEC_FILE paths
-   - For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot")
+   - The JSON output contains `BRANCH_NAME`, `SPEC_FILE`, and `FEATURE_NUM` — always use these values for subsequent steps
 
 3. Load `.specify/templates/spec-template.md` to understand required sections.
 
