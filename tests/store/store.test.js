@@ -703,14 +703,24 @@ describe('startMatch', () => {
     expect(() => store.startMatch(alice.id, bob.id, 0)).toThrow(/target score must be at least 1/i);
   });
 
-  it('throws "Player already in an active match" (FR-012) when player1 is in an active match', () => {
+  it('allows player1 to start a new match when already in an active match with a different opponent', () => {
     store.startMatch(alice.id, bob.id, 5);
-    expect(() => store.startMatch(alice.id, charlie.id, 5)).toThrow(/player already in an active match/i);
+    expect(() => store.startMatch(alice.id, charlie.id, 5)).not.toThrow();
   });
 
-  it('throws "Player already in an active match" (FR-012) when player2 is in an active match', () => {
+  it('allows player2 to start a new match when already in an active match with a different opponent', () => {
     store.startMatch(alice.id, bob.id, 5);
-    expect(() => store.startMatch(charlie.id, bob.id, 5)).toThrow(/player already in an active match/i);
+    expect(() => store.startMatch(charlie.id, bob.id, 5)).not.toThrow();
+  });
+
+  it('throws when starting a duplicate active match between the same two players', () => {
+    store.startMatch(alice.id, bob.id, 5);
+    expect(() => store.startMatch(alice.id, bob.id, 5)).toThrow(/active match between these players/i);
+  });
+
+  it('throws when starting a duplicate active match (reversed player order)', () => {
+    store.startMatch(alice.id, bob.id, 5);
+    expect(() => store.startMatch(bob.id, alice.id, 5)).toThrow(/active match between these players/i);
   });
 
   it('allows starting a match for a player whose previous match is complete', () => {

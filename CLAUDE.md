@@ -16,6 +16,7 @@ Auto-generated from all feature plans. Last updated: 2026-03-04
 - Vanilla JavaScript ES2022+ (native ES modules), HTML5, CSS3 + None (production); Vitest 3.x + Playwright (dev) (008-record-game-ux)
 - localStorage — no changes; `_selectedWinner` is ephemeral module-level state (008-record-game-ux)
 - localStorage — unchanged (no data changes) (009-button-style-consistency)
+- `localStorage` — no changes to keys or data shapes (010-concurrent-matches)
 
 - HTML5 / CSS3 / Vanilla JavaScript (ES2022+) + None (production). Vitest 3.x (dev only, for TDD). (001-tournament-tracker)
 
@@ -49,9 +50,9 @@ index.html, styles.css, package.json, vitest.config.js
 - TDD: tests MUST be written and observed to fail before implementation
 
 ## Recent Changes
+- 010-concurrent-matches: Added Vanilla JavaScript ES2022+, HTML5, CSS3 + None (production)
 - 009-button-style-consistency: Added Vanilla JavaScript ES2022+, HTML5, CSS3 + None (production)
 - 008-record-game-ux: Added Vanilla JavaScript ES2022+ (native ES modules), HTML5, CSS3 + None (production); Vitest 3.x + Playwright (dev)
-- 007-tap-target-select: Added Vanilla JavaScript ES2022+ (native ES modules) + None (production). Vitest 3.x + Playwright (dev only)
 
 
 <!-- MANUAL ADDITIONS START -->
