@@ -38,7 +38,7 @@ Given that feature description, do this:
 
 2. **Create the branch and spec scaffold**:
 
-   Run the script — it handles fetching remotes and finding the globally highest branch number automatically:
+   Run the script from the repository root — it handles fetching remotes and finding the globally highest branch number automatically:
 
    ```bash
    .specify/scripts/bash/create-new-feature.sh --json --short-name "your-short-name" "Feature description"
