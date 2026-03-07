@@ -18,6 +18,7 @@ let _selectedP1 = null;     // player ID
 let _selectedP2 = null;     // player ID
 let _selectedTarget = 7;   // target score (reset to 7 on form close/render)
 let _selectedWinner = null; // player ID of selected game winner, or null
+let _selectedCubeValue = 1; // cube multiplier selected in game recording form
 let _container = null;
 
 // Event bus handlers stored for cleanup
@@ -60,7 +61,7 @@ function escapeHtml(str) {
 // ---------------------------------------------------------------------------
 
 
-function gameFormHtml(match, players) {
+export function gameFormHtml(match, players) {
   const p1 = players.find((p) => p.id === match.player1Id);
   const p2 = players.find((p) => p.id === match.player2Id);
   const p1Cls = _selectedWinner === match.player1Id ? 'pick-btn pick-btn--selected' : 'pick-btn';
@@ -81,17 +82,14 @@ function gameFormHtml(match, players) {
           <option value="backgammon">Backgammon</option>
         </select>
       </label>
-      <label class="live-form__label">Cube
-        <select class="live-form__select" data-cube-value>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="4">4</option>
-          <option value="8">8</option>
-          <option value="16">16</option>
-          <option value="32">32</option>
-          <option value="64">64</option>
-        </select>
-      </label>
+      <div class="live-form__label">Cube
+        <div class="cube-pick-grid">
+          ${[1, 2, 4, 8, 16, 32, 64].map((v) => {
+            const sel = v === _selectedCubeValue ? ' pick-btn--selected' : '';
+            return `<button class="pick-btn${sel}" type="button" data-action="pick-cube-value" data-cube-value="${v}">${v}</button>`;
+          }).join('')}
+        </div>
+      </div>
       <button class="btn btn-primary btn-full" type="button" data-action="submit-game" data-match-id="${escapeHtml(match.id)}">Save</button>
       <button class="btn btn-secondary btn-full" type="button" data-action="record-game" data-match-id="${escapeHtml(match.id)}">Cancel</button>
     </div>`;
@@ -342,6 +340,7 @@ export function render(container) {
   _selectedP2 = null;
   _selectedTarget = 7;
   _selectedWinner = null;
+  _selectedCubeValue = 1;
   container.innerHTML = viewHtml(getState());
 }
 
@@ -412,17 +411,19 @@ export function onMount(container) {
       }
 
       if (wasExpanded) {
-        // Closing form — reset winner selection
+        // Closing form — reset winner and cube selection
         _expandedCardId = null;
         _selectedWinner = null;
+        _selectedCubeValue = 1;
         const formWrap = _container.querySelector(`[data-form-wrap="${matchId}"]`);
         if (formWrap) {
           formWrap.dataset.expanded = 'false';
           formWrap.innerHTML = '';
         }
       } else {
-        // Opening form — reset winner selection to clean state
+        // Opening form — reset winner and cube selection to clean state
         _selectedWinner = null;
+        _selectedCubeValue = 1;
         _expandedCardId = matchId;
         const formWrap = _container.querySelector(`[data-form-wrap="${matchId}"]`);
         const { matches, players } = getState();
@@ -456,6 +457,24 @@ export function onMount(container) {
       return;
     }
 
+    if (action === 'pick-cube-value') {
+      const cubeVal = parseInt(target.dataset.cubeValue, 10);
+      if (!Number.isNaN(cubeVal)) {
+        _selectedCubeValue = cubeVal;
+        const card = target.closest('.live-card');
+        if (card) {
+          card.querySelectorAll('[data-action="pick-cube-value"]').forEach((btn) => {
+            if (parseInt(btn.dataset.cubeValue, 10) === _selectedCubeValue) {
+              btn.classList.add('pick-btn--selected');
+            } else {
+              btn.classList.remove('pick-btn--selected');
+            }
+          });
+        }
+      }
+      return;
+    }
+
     if (action === 'submit-game') {
       const card = _container.querySelector(`.live-card[data-match-id="${matchId}"]`);
       if (!card) return;
@@ -468,12 +487,13 @@ export function onMount(container) {
       }
 
       const resultType = card.querySelector('[data-result-type]')?.value ?? 'standard';
-      const cubeValue = parseInt(card.querySelector('[data-cube-value]')?.value ?? '1', 10);
+      const cubeValue = _selectedCubeValue;
       const winner = _selectedWinner;
       try {
         recordMatchGame(matchId, { winnerId: winner, resultType, cubeValue });
         _expandedCardId = null;
         _selectedWinner = null;
+        _selectedCubeValue = 1;
         // Score pulse animation — refreshActiveZone re-renders so we apply after
         refreshActiveZone();
         // Mark updated score cells
