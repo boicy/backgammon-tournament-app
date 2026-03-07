@@ -14,26 +14,23 @@ test('SC1 — fresh app with no localStorage shows name prompt, not player list'
   await expect(page.locator('.view--live')).not.toBeVisible();
 });
 
-test('SC2 — submitting empty name shows validation error and stays on prompt', async ({ page }) => {
-  const submitBtn = page.locator('.name-prompt button[type="submit"]');
-  await submitBtn.click();
-  await expect(page.locator('.name-prompt [data-error]')).toBeVisible();
-  await expect(page.locator('.name-prompt')).toBeVisible();
+test('SC2 — clicking Start Tournament navigates directly to live view (no validation step)', async ({ page }) => {
+  await page.locator('#start-tournament-btn').click();
+  await expect(page.locator('.view--live')).toBeVisible();
+  await expect(page.locator('.name-prompt')).not.toBeVisible();
 });
 
-test('SC3 — entering valid name navigates to Match Hub with name visible', async ({ page }) => {
-  await page.locator('.name-prompt input[type="text"]').fill('April Club Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
-
+test('SC3 — auto-generated name is visible in live view after starting tournament', async ({ page }) => {
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
-  await expect(page.locator('.tournament-name')).toContainText('April Club Night');
+  await expect(page.locator('.tournament-name')).toBeVisible();
 });
 
-test('SC4 — refreshing after naming preserves tournament name', async ({ page }) => {
-  await page.locator('.name-prompt input[type="text"]').fill('Persistent Tournament');
-  await page.locator('.name-prompt button[type="submit"]').click();
+test('SC4 — refreshing after starting preserves the auto-generated tournament name', async ({ page }) => {
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
+  const nameBefore = (await page.locator('.tournament-name').textContent()).trim();
 
   await page.reload();
-  await expect(page.locator('.tournament-name')).toContainText('Persistent Tournament');
+  await expect(page.locator('.tournament-name')).toHaveText(new RegExp(nameBefore.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });

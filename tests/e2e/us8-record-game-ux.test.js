@@ -22,8 +22,7 @@ async function setupTournament(page, { name = 'Club Night', players = [] } = {})
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
   for (const playerName of players) {
     await page.locator('[data-action="toggle-add-player"]').click();
@@ -68,9 +67,9 @@ test('AC1 — game form shows two pick-winner buttons, no dropdown; result/cube 
   // Old dropdown must not exist
   await expect(form.locator('[data-game-winner]')).toHaveCount(0);
 
-  // FR-009: result-type and cube-value selects still present
+  // FR-009: result-type select and cube-value buttons still present
   await expect(form.locator('[data-result-type]')).toBeVisible();
-  await expect(form.locator('[data-cube-value]')).toBeVisible();
+  await expect(form.locator('[data-action="pick-cube-value"]').first()).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------

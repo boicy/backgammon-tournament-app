@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function archiveTournamentWith(page, tournamentName, players) {
   await expect(page.locator('.name-prompt')).toBeVisible();
-  await page.locator('.name-prompt input[type="text"]').fill(tournamentName);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 
   for (const name of players) {
@@ -44,8 +43,7 @@ test('AC1 — after archiving tournament with Alice, typing "Al" shows Alice as 
   await archiveTournamentWith(page, 'Past Night', ['Alice', 'Bob']);
 
   // Start new tournament
-  await page.locator('.name-prompt input[type="text"]').fill('New Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 
   // Expand add-player to check datalist
@@ -59,8 +57,7 @@ test('AC1 — after archiving tournament with Alice, typing "Al" shows Alice as 
 test('AC3 — typing a new name not in roster and submitting adds it to the roster', async ({ page }) => {
   await archiveTournamentWith(page, 'Past Night', ['Alice']);
 
-  await page.locator('.name-prompt input[type="text"]').fill('New Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 
   // Add a new player not in the roster
@@ -77,8 +74,7 @@ test('AC3 — typing a new name not in roster and submitting adds it to the rost
 });
 
 test('AC4 — no previous tournaments — no suggestions in datalist', async ({ page }) => {
-  await page.locator('.name-prompt input[type="text"]').fill('Fresh Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 
   await page.locator('[data-action="toggle-add-player"]').click();

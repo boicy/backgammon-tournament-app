@@ -17,8 +17,7 @@ async function setupTournament(page, { name = 'Club Night', players = [] } = {})
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
   for (const playerName of players) {
     await page.locator('[data-action="toggle-add-player"]').click();
@@ -87,7 +86,7 @@ test('AC3 — Live column clears after match completes', async ({ page }) => {
   // Record a game to complete the match (cube=4: standard×4=4pts >= target 3)
   await page.locator('[data-action="record-game"]').first().click();
   await page.locator('[data-action="pick-winner"]').first().click();
-  await page.locator('[data-cube-value]').first().selectOption('4');
+  await page.locator('[data-action="pick-cube-value"][data-cube-value="4"]').first().click();
   await page.locator('[data-action="submit-game"]').first().click();
 
   // Now go to Standings

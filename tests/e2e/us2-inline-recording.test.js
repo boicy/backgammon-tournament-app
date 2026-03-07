@@ -20,8 +20,7 @@ async function setupTournament(page, { name = 'Club Night', players = [] } = {})
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
 
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 
   for (const playerName of players) {
@@ -65,10 +64,10 @@ test('AC1 — tapping Record Game expands inline form within the match card', as
   const form = card.locator('[data-game-form]');
   await expect(form).toBeVisible();
 
-  // Form must contain two pick-winner buttons, result type select, cube value select
+  // Form must contain two pick-winner buttons, result type select, cube value buttons
   await expect(form.locator('[data-action="pick-winner"]').first()).toBeVisible();
   await expect(form.locator('[data-result-type]')).toBeVisible();
-  await expect(form.locator('[data-cube-value]')).toBeVisible();
+  await expect(form.locator('[data-action="pick-cube-value"]').first()).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
@@ -144,7 +143,7 @@ test('AC4 — winning last game transitions card to complete state', async ({ pa
   // Expand and record single game (wins the match)
   await activeCard.locator('[data-action="record-game"]').click();
   await activeCard.locator('[data-action="pick-winner"]').first().click();
-  await activeCard.locator('[data-cube-value]').selectOption('4');
+  await activeCard.locator('[data-action="pick-cube-value"][data-cube-value="4"]').click();
   await activeCard.locator('[data-action="submit-game"]').click();
 
   // Card should now be in complete section

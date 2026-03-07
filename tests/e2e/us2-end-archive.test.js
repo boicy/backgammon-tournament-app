@@ -3,8 +3,7 @@ import { test, expect } from '@playwright/test';
 // Helpers
 async function startTournament(page, name) {
   await expect(page.locator('.name-prompt')).toBeVisible();
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 }
 
@@ -56,7 +55,7 @@ test('AC1 — End Tournament with 2 players + 1 game shows confirm, archives, na
   // Verify archive has 1 entry in Club tab
   await page.goto('/#/club');
   await expect(page.locator('.archive-item')).toHaveCount(1);
-  await expect(page.locator('.archive-item').first()).toContainText('Test Night');
+  await expect(page.locator('.archive-item-name').first()).toHaveText(/^\d{2}:\d{2}\. \w+, \w+ \d+, \d{4}$/);
 });
 
 test('AC2 — starting new tournament with active players+games auto-archives before prompting', async ({ page }) => {
@@ -65,16 +64,15 @@ test('AC2 — starting new tournament with active players+games auto-archives be
   // Navigate to name prompt (router allows /start without guard)
   await page.goto('/#/start');
   await expect(page.locator('.name-prompt')).toBeVisible();
-  await page.locator('.name-prompt input[type="text"]').fill('Second Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
 
   await expect(page.locator('.view--live')).toBeVisible();
-  await expect(page.locator('.tournament-name')).toContainText('Second Night');
+  await expect(page.locator('.tournament-name')).toBeVisible();
 
-  // Verify First Night was auto-archived
+  // Verify first tournament was auto-archived
   await page.goto('/#/club');
   await expect(page.locator('.archive-item')).toHaveCount(1);
-  await expect(page.locator('.archive-item').first()).toContainText('First Night');
+  await expect(page.locator('.archive-item-name').first()).toHaveText(/^\d{2}:\d{2}\. \w+, \w+ \d+, \d{4}$/);
 });
 
 test('AC3 — archived tournament visible in Club tab after page refresh', async ({ page }) => {
@@ -86,15 +84,14 @@ test('AC3 — archived tournament visible in Club tab after page refresh', async
   await expect(page.locator('.name-prompt')).toBeVisible();
 
   // Start new tournament then reload
-  await page.locator('.name-prompt input[type="text"]').fill('New Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 
   await page.reload();
   await expect(page.locator('.view--live')).toBeVisible();
   await page.goto('/#/club');
   await expect(page.locator('.archive-item')).toHaveCount(1);
-  await expect(page.locator('.archive-item').first()).toContainText('Test Night');
+  await expect(page.locator('.archive-item-name').first()).toHaveText(/^\d{2}:\d{2}\. \w+, \w+ \d+, \d{4}$/);
 });
 
 test('AC4 — End Tournament with no players discards without archiving', async ({ page }) => {
@@ -107,8 +104,7 @@ test('AC4 — End Tournament with no players discards without archiving', async 
   await expect(page.locator('.name-prompt')).toBeVisible();
 
   // Start new tournament and check club shows no archive
-  await page.locator('.name-prompt input[type="text"]').fill('Next Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await page.goto('/#/club');
   await expect(page.locator('.archive-item')).toHaveCount(0);
 });
@@ -120,10 +116,9 @@ test('Reset Tournament discards without archiving (FR-003 regression)', async ({
   await page.locator('#hamburger-btn').click();
   await page.locator('[data-action="reset-tournament"]').click();
 
-  await expect(page.locator('.name-prompt')).toBeVisible();
+  // Reset stays on live view (014: tournament preserved, no new name prompt)
+  await expect(page.locator('.view--live')).toBeVisible();
 
-  await page.locator('.name-prompt input[type="text"]').fill('Next Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
   await page.goto('/#/club');
   await expect(page.locator('.archive-item')).toHaveCount(0);
 });

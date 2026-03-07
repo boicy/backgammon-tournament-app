@@ -3,8 +3,7 @@ import { test, expect } from '@playwright/test';
 // Helpers
 async function startTournament(page, name) {
   await expect(page.locator('.name-prompt')).toBeVisible();
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 }
 
@@ -27,7 +26,7 @@ async function recordGame(page, winnerName, loserName) {
   const card = page.locator('.live-card--active').first();
   await card.locator('[data-action="record-game"]').click();
   await card.locator('[data-action="pick-winner"]').filter({ hasText: winnerName }).click();
-  await card.locator('[data-cube-value]').selectOption('4');
+  await card.locator('[data-action="pick-cube-value"][data-cube-value="4"]').click();
   await card.locator('[data-action="submit-game"]').click();
   await page.waitForTimeout(50);
 }
@@ -202,7 +201,7 @@ test('T034 — localStorage has correct keys after archiving a tournament', asyn
 
   // Archive has 1 entry
   expect(storage.archive).toHaveLength(1);
-  expect(storage.archive[0].name).toBe('Test Night');
+  expect(storage.archive[0].name).toMatch(/^\d{2}:\d{2}\. \w+, \w+ \d+, \d{4}$/);
   expect(storage.archive[0].gameCount).toBe(1);
   expect(storage.archive[0].winnerName).toBe('Alice');
 

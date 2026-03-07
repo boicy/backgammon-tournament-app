@@ -22,8 +22,7 @@ async function freshStart(page) {
 
 async function createTournament(page, name = 'Club Night') {
   await freshStart(page);
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 }
 
@@ -130,7 +129,7 @@ test('AC3 — completed match card has green left border accent', async ({ page 
   // Record a game to complete the match
   await page.locator('[data-action="record-game"]').first().click();
   await page.locator('[data-action="pick-winner"]').first().click();
-  await page.locator('[data-cube-value]').first().selectOption('4');
+  await page.locator('[data-action="pick-cube-value"][data-cube-value="4"]').first().click();
   await page.locator('[data-action="submit-game"]').first().click();
 
   const completedCard = page.locator('.live-card--complete').first();

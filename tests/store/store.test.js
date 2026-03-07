@@ -37,35 +37,37 @@ beforeEach(async () => {
 // initTournament
 // ---------------------------------------------------------------------------
 
+const DATE_NAME_RE = /^\d{2}:\d{2}\. \w+, \w+ \d+, \d{4}$/;
+
 describe('initTournament', () => {
-  it('creates a new tournament with the given name', () => {
-    store.initTournament('Friday Night');
+  it('creates a new tournament with an auto-generated date/time name', () => {
+    store.initTournament();
     const state = store.getState();
     expect(state.tournament).not.toBeNull();
-    expect(state.tournament.name).toBe('Friday Night');
+    expect(state.tournament.name).toMatch(DATE_NAME_RE);
     expect(state.tournament.status).toBe('active');
   });
 
   it('assigns a UUID id to the tournament', () => {
-    store.initTournament('Test');
+    store.initTournament();
     const { tournament } = store.getState();
     expect(tournament.id).toMatch(/^[0-9a-f-]{36}$/i);
   });
 
   it('clears any existing players and matches', () => {
-    store.initTournament('First');
+    store.initTournament();
     store.addPlayer('Alice');
-    store.initTournament('Second');
+    store.initTournament();
     const state = store.getState();
     expect(state.players).toHaveLength(0);
     expect(state.matches).toHaveLength(0);
   });
 
   it('persists tournament to localStorage', () => {
-    store.initTournament('Persist Test');
+    store.initTournament();
     expect(localStorageMock.setItem).toHaveBeenCalledWith(
       'backgammon:tournament',
-      expect.stringContaining('Persist Test'),
+      expect.any(String),
     );
   });
 });
@@ -75,7 +77,7 @@ describe('initTournament', () => {
 // ---------------------------------------------------------------------------
 
 describe('addPlayer', () => {
-  beforeEach(() => { store.initTournament('Test Tournament'); });
+  beforeEach(() => { store.initTournament(); });
 
   it('adds a player to the player list', () => {
     store.addPlayer('Alice');
@@ -122,7 +124,7 @@ describe('addPlayer', () => {
 // ---------------------------------------------------------------------------
 
 describe('removePlayer', () => {
-  beforeEach(() => { store.initTournament('Test Tournament'); });
+  beforeEach(() => { store.initTournament(); });
 
   it('removes a player with no games', () => {
     store.addPlayer('Alice');
@@ -162,7 +164,7 @@ describe.skip('recordGame', () => {
   let alice, bob;
 
   beforeEach(() => {
-    store.initTournament('Test Tournament');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -238,7 +240,7 @@ describe.skip('deleteGame', () => {
   let alice, bob;
 
   beforeEach(() => {
-    store.initTournament('Test Tournament');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -284,7 +286,7 @@ describe.skip('deleteGame', () => {
 
 describe('resetTournament', () => {
   beforeEach(() => {
-    store.initTournament('Old Tournament');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -293,20 +295,31 @@ describe('resetTournament', () => {
     store.startMatch(alice.id, bob.id, 5);
   });
 
-  it('clears all in-memory state', () => {
+  it('preserves the tournament and its name after reset (014)', () => {
+    const nameBefore = store.getState().tournament.name;
     store.resetTournament();
     const state = store.getState();
-    expect(state.tournament).toBeNull();
+    expect(state.tournament).not.toBeNull();
+    expect(state.tournament.name).toBe(nameBefore);
+  });
+
+  it('clears players and matches but keeps tournament', () => {
+    store.resetTournament();
+    const state = store.getState();
+    expect(state.tournament).not.toBeNull();
     expect(state.players).toHaveLength(0);
     expect(state.matches).toHaveLength(0);
     expect(state.standings).toHaveLength(0);
   });
 
-  it('removes all three localStorage keys', () => {
+  it('removes players and matches localStorage keys but persists tournament', () => {
+    localStorageMock.setItem.mockClear();
+    localStorageMock.removeItem.mockClear();
     store.resetTournament();
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:tournament');
+    expect(localStorageMock.removeItem).not.toHaveBeenCalledWith('backgammon:tournament');
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:players');
     expect(localStorageMock.removeItem).toHaveBeenCalledWith('backgammon:matches');
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('backgammon:tournament', expect.any(String));
   });
 });
 
@@ -347,7 +360,7 @@ describe('localStorage persistence', () => {
 // ---------------------------------------------------------------------------
 
 describe('quota exceeded handling', () => {
-  beforeEach(() => { store.initTournament('Test'); });
+  beforeEach(() => { store.initTournament(); });
 
   it('preserves in-memory state when localStorage.setItem throws QuotaExceededError', () => {
     localStorageMock.setItem.mockImplementationOnce(() => {
@@ -418,28 +431,18 @@ describe('loadFromStorage — archive and roster', () => {
 });
 
 // ---------------------------------------------------------------------------
-// initTournament — name validation (T005)
+// initTournament — auto-generated name (014)
 // ---------------------------------------------------------------------------
 
-describe('initTournament — name validation', () => {
-  it("throws Error('Tournament name is required') for empty string", () => {
-    expect(() => store.initTournament('')).toThrow('Tournament name is required');
+describe('initTournament — auto-generated name (014)', () => {
+  it('generates a name matching the date/time format when called with no argument', () => {
+    store.initTournament();
+    const { tournament } = store.getState();
+    expect(tournament.name).toMatch(DATE_NAME_RE);
   });
 
-  it('throws for whitespace-only string', () => {
-    expect(() => store.initTournament('   ')).toThrow('Tournament name is required');
-  });
-
-  it('throws for name over 100 characters', () => {
-    expect(() => store.initTournament('a'.repeat(101))).toThrow('Tournament name too long');
-  });
-
-  it('does not throw for valid name', () => {
-    expect(() => store.initTournament('valid name')).not.toThrow();
-  });
-
-  it('accepts name of exactly 100 characters', () => {
-    expect(() => store.initTournament('a'.repeat(100))).not.toThrow();
+  it('does not throw when called with no argument', () => {
+    expect(() => store.initTournament()).not.toThrow();
   });
 });
 
@@ -451,7 +454,7 @@ describe('endTournament', () => {
   let alice, bob;
 
   function setupTournamentWithMatch() {
-    store.initTournament('Test');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -466,7 +469,7 @@ describe('endTournament', () => {
     setupTournamentWithMatch();
     store.endTournament();
     expect(store.getState().archive).toHaveLength(1);
-    expect(store.getState().archive[0].name).toBe('Test');
+    expect(store.getState().archive[0].name).toMatch(DATE_NAME_RE);
   });
 
   it('persists archive to backgammon:archive in localStorage', () => {
@@ -495,7 +498,7 @@ describe('endTournament', () => {
   });
 
   it('discards without archiving when tournament has 0 matches', () => {
-    store.initTournament('Empty');
+    store.initTournament();
     store.addPlayer('Alice');
     store.endTournament();
     expect(store.getState().archive).toHaveLength(0);
@@ -503,7 +506,7 @@ describe('endTournament', () => {
   });
 
   it('discards without archiving when tournament has 0 players', () => {
-    store.initTournament('No Players');
+    store.initTournament();
     store.endTournament();
     expect(store.getState().archive).toHaveLength(0);
     expect(store.getState().tournament).toBeNull();
@@ -521,7 +524,8 @@ describe('endTournament', () => {
 
 describe('initTournament — auto-archive', () => {
   it('auto-archives the current tournament if it has players+matches before creating new one', () => {
-    store.initTournament('First');
+    store.initTournament();
+    const firstName = store.getState().tournament.name;
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -529,22 +533,22 @@ describe('initTournament — auto-archive', () => {
     const bob = players.find((p) => p.name === 'Bob');
     store.startMatch(alice.id, bob.id, 5);
 
-    store.initTournament('Second');
+    store.initTournament();
     expect(store.getState().archive).toHaveLength(1);
-    expect(store.getState().archive[0].name).toBe('First');
-    expect(store.getState().tournament.name).toBe('Second');
+    expect(store.getState().archive[0].name).toBe(firstName);
+    expect(store.getState().tournament.name).toMatch(DATE_NAME_RE);
   });
 
   it('does not auto-archive if active tournament has no players', () => {
-    store.initTournament('First');
-    store.initTournament('Second');
+    store.initTournament();
+    store.initTournament();
     expect(store.getState().archive).toHaveLength(0);
   });
 
   it('does not auto-archive if active tournament has no matches', () => {
-    store.initTournament('First');
+    store.initTournament();
     store.addPlayer('Alice');
-    store.initTournament('Second');
+    store.initTournament();
     expect(store.getState().archive).toHaveLength(0);
   });
 });
@@ -554,7 +558,7 @@ describe('initTournament — auto-archive', () => {
 // ---------------------------------------------------------------------------
 
 describe('addPlayer — roster update', () => {
-  beforeEach(() => { store.initTournament('Roster Test'); });
+  beforeEach(() => { store.initTournament(); });
 
   it('adds name to roster when roster is empty', () => {
     store.addPlayer('Alice');
@@ -564,7 +568,7 @@ describe('addPlayer — roster update', () => {
   it('does not add duplicate name (same case)', () => {
     store.addPlayer('Alice');
     const countBefore = store.getState().roster.length;
-    store.initTournament('Second');
+    store.initTournament();
     store.addPlayer('Alice');
     expect(store.getState().roster.length).toBe(countBefore);
   });
@@ -572,7 +576,7 @@ describe('addPlayer — roster update', () => {
   it('does not add duplicate name (different case — case-insensitive dedup)', () => {
     store.addPlayer('Alice');
     const countBefore = store.getState().roster.length;
-    store.initTournament('Second');
+    store.initTournament();
     store.addPlayer('alice');
     expect(store.getState().roster.length).toBe(countBefore);
   });
@@ -599,7 +603,7 @@ describe('addPlayer — roster update', () => {
 
 describe('enableRoundRobin', () => {
   beforeEach(() => {
-    store.initTournament('Test');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     store.addPlayer('Charlie');
@@ -627,7 +631,7 @@ describe('enableRoundRobin', () => {
 
 describe('disableRoundRobin', () => {
   beforeEach(() => {
-    store.initTournament('Test');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     store.enableRoundRobin();
@@ -642,7 +646,7 @@ describe('disableRoundRobin', () => {
 
 describe('getState includes schedule', () => {
   it('returns schedule: null when round-robin is not enabled', () => {
-    store.initTournament('Test');
+    store.initTournament();
     expect(store.getState().schedule).toBeNull();
   });
 });
@@ -655,7 +659,7 @@ describe('startMatch', () => {
   let alice, bob, charlie;
 
   beforeEach(() => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     store.addPlayer('Charlie');
@@ -741,7 +745,7 @@ describe('recordMatchGame', () => {
   let alice, bob, matchId;
 
   beforeEach(() => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -802,7 +806,7 @@ describe('abandonMatch', () => {
   let alice, bob, matchId;
 
   beforeEach(() => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -854,7 +858,7 @@ describe('abandonMatch', () => {
 
 describe('selectMatch', () => {
   beforeEach(() => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -887,7 +891,7 @@ describe('selectMatch', () => {
 
 describe('getState — match-derived standings', () => {
   it('returns standings derived from match results', () => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -904,7 +908,7 @@ describe('getState — match-derived standings', () => {
   });
 
   it('returns matches array in state', () => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -921,7 +925,7 @@ describe('removePlayer — match-based guard', () => {
   let alice, bob;
 
   beforeEach(() => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -961,7 +965,7 @@ describe('removePlayer — match-based guard', () => {
 
 describe('endTournament — match-based archiving', () => {
   it('archives tournament when it has players and at least one match', () => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -975,14 +979,14 @@ describe('endTournament — match-based archiving', () => {
   });
 
   it('does not archive when tournament has no matches', () => {
-    store.initTournament('Empty Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.endTournament();
     expect(store.getState().archive).toHaveLength(0);
   });
 
   it('clears matches from state after ending', () => {
-    store.initTournament('Match Night');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -1000,7 +1004,7 @@ describe('endMatchEarly', () => {
   let alice, bob, matchId;
 
   beforeEach(() => {
-    store.initTournament('End Early Test');
+    store.initTournament();
     store.addPlayer('Alice');
     store.addPlayer('Bob');
     const { players } = store.getState();
@@ -1131,7 +1135,7 @@ describe('endMatchEarly', () => {
     store.endMatchEarly(matchId);
     // Note: not actually tied by score but tests standings attribution
     // Use a true tie: both 1 standard point
-    store.initTournament('End Early Test 2');
+    store.initTournament();
     store.addPlayer('Alice2');
     store.addPlayer('Bob2');
     const { players } = store.getState();

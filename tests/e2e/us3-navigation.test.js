@@ -24,8 +24,7 @@ async function freshStart(page) {
 
 async function createTournament(page, name = 'Club Night') {
   await freshStart(page);
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 }
 
@@ -210,7 +209,7 @@ test('hamburger menu Standings link navigates back from Club', async ({ page }) 
 // Reset Tournament → does NOT archive, returns to Start state
 // ---------------------------------------------------------------------------
 
-test('Reset Tournament discards data and returns to Start state', async ({ page }) => {
+test('Reset Tournament clears data and stays on live view (014: tournament preserved)', async ({ page }) => {
   await createTournament(page, 'Night to Reset');
 
   await page.locator('#hamburger-btn').click();
@@ -218,10 +217,10 @@ test('Reset Tournament discards data and returns to Start state', async ({ page 
   page.once('dialog', (d) => d.accept());
   await page.locator('[data-action="reset-tournament"]').click();
 
-  await expect(page.locator('.name-prompt')).toBeVisible();
+  await expect(page.locator('.view--live')).toBeVisible();
 
   const bodyAttr = await page.locator('body').getAttribute('data-has-tournament');
-  expect(bodyAttr).toBe('false');
+  expect(bodyAttr).toBe('true');
 });
 
 // ---------------------------------------------------------------------------
