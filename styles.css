@@ -1920,6 +1920,13 @@ select option {
   margin-bottom: 0.75rem;
 }
 
+.cube-pick-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: 0.25rem;
+}
+
 .pick-winner-grid .pick-btn {
   flex: 1 1 0;
   min-width: 0;

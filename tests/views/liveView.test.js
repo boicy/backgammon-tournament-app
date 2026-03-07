@@ -434,7 +434,7 @@ describe('liveView — winner pick buttons', () => {
     const oldSelect = form.querySelector('[data-game-winner]');
     expect(oldSelect).toBeNull();
 
-    // result-type and cube-value selects still present (FR-009)
+    // result-type select and cube-value lozenge buttons still present
     expect(form.querySelector('[data-result-type]')).not.toBeNull();
     expect(form.querySelector('[data-cube-value]')).not.toBeNull();
 
@@ -516,6 +516,66 @@ describe('liveView — winner pick buttons', () => {
     expect(recordMatchGame).not.toHaveBeenCalled();
 
     cleanup(container);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 013-cube-lozenges / T002: gameFormHtml cube lozenge rendering
+// ---------------------------------------------------------------------------
+
+describe('liveView — gameFormHtml cube lozenge rendering', () => {
+  const match = {
+    id: 'm1',
+    player1Id: 'p1',
+    player2Id: 'p2',
+    targetScore: 7,
+    status: 'active',
+    games: [],
+    winnerId: null,
+  };
+  const players = [
+    { id: 'p1', name: 'Alice' },
+    { id: 'p2', name: 'Bob' },
+  ];
+
+  function parseHtml(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div;
+  }
+
+  it('renders exactly 7 [data-action="pick-cube-value"] buttons', () => {
+    const html = view.gameFormHtml(match, players);
+    const container = parseHtml(html);
+    const buttons = container.querySelectorAll('[data-action="pick-cube-value"]');
+    expect(buttons.length).toBe(7);
+  });
+
+  it('data-cube-value attributes are "1","2","4","8","16","32","64" in order', () => {
+    const html = view.gameFormHtml(match, players);
+    const container = parseHtml(html);
+    const values = [...container.querySelectorAll('[data-action="pick-cube-value"]')].map(
+      (b) => b.dataset.cubeValue
+    );
+    expect(values).toEqual(['1', '2', '4', '8', '16', '32', '64']);
+  });
+
+  it('button with data-cube-value="1" has pick-btn--selected class by default', () => {
+    const html = view.gameFormHtml(match, players);
+    const container = parseHtml(html);
+    const btn1 = container.querySelector('[data-action="pick-cube-value"][data-cube-value="1"]');
+    expect(btn1).not.toBeNull();
+    expect(btn1.classList.contains('pick-btn--selected')).toBe(true);
+    const otherBtns = [...container.querySelectorAll('[data-action="pick-cube-value"]')].filter(
+      (b) => b.dataset.cubeValue !== '1'
+    );
+    otherBtns.forEach((b) => expect(b.classList.contains('pick-btn--selected')).toBe(false));
+  });
+
+  it('no <select data-cube-value> element exists in the rendered HTML', () => {
+    const html = view.gameFormHtml(match, players);
+    const container = parseHtml(html);
+    expect(container.querySelector('select[data-cube-value]')).toBeNull();
   });
 });
 
