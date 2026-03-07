@@ -24,7 +24,7 @@ export function render(container) {
                 aria-label="Tournament name"
               />
             </div>
-            <button type="submit" class="btn btn-primary" aria-label="Start tournament">
+            <button type="submit" class="btn btn-primary btn-full" aria-label="Start tournament">
               Start
             </button>
           </div>
