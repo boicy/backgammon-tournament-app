@@ -1,7 +1,7 @@
 // liveView.js — Live match monitoring view (US1–US2, US6–US7)
 // Replaces matchHub.js + matchDetail.js with a single inline-recording view.
 
-import { getState, addPlayer, removePlayer, startMatch, abandonMatch, recordMatchGame } from '../store/store.js';
+import { getState, addPlayer, removePlayer, startMatch, endMatchEarly, recordMatchGame } from '../store/store.js';
 import { eventBus } from '../store/eventBus.js';
 import { updateTournamentState } from '../router.js';
 
@@ -131,9 +131,18 @@ function renderMatchCard(match, players, expanded) {
 
 function renderCompletedCard(match, players) {
   const { p1, p2 } = computeScore(match);
-  const winnerName = escapeHtml(playerName(players, match.winnerId));
   const name1 = escapeHtml(playerName(players, match.player1Id));
   const name2 = escapeHtml(playerName(players, match.player2Id));
+
+  let metaLabel;
+  if (match.status === 'abandoned') {
+    metaLabel = 'Abandoned';
+  } else if (match.winnerId) {
+    const winnerName = escapeHtml(playerName(players, match.winnerId));
+    metaLabel = match.endedEarly ? `${winnerName} wins · Ended Early` : `${winnerName} wins`;
+  } else {
+    metaLabel = match.endedEarly ? 'Tied · Ended Early' : 'Tied';
+  }
 
   return `
     <article class="live-card live-card--complete" data-match-id="${escapeHtml(match.id)}">
@@ -145,7 +154,7 @@ function renderCompletedCard(match, players) {
             <span class="live-card__score-sep"> — </span>
             <span>${p2}</span>
           </div>
-          <div class="live-card__meta">${winnerName} wins</div>
+          <div class="live-card__meta">${metaLabel}</div>
         </div>
         <span class="live-card__player live-card__player--right">${name2}</span>
       </div>
@@ -479,26 +488,32 @@ export function onMount(container) {
     }
 
     if (action === 'open-overflow') {
-      if (window.confirm('Abandon this match?')) {
-        try {
-          if (_expandedCardId === matchId) _expandedCardId = null;
-          abandonMatch(matchId);
-          refreshActiveZone();
-        } catch (err) {
-          console.error('abandonMatch error:', err);
+      const match = getState().matches.find((m) => m.id === matchId);
+      if (!match) return;
+
+      let message;
+      if (match.games.length === 0) {
+        message = 'No games recorded. Abandon this match? No scores will be saved.';
+      } else {
+        const { p1, p2 } = computeScore(match);
+        const { players } = getState();
+        const n1 = playerName(players, match.player1Id);
+        const n2 = playerName(players, match.player2Id);
+        if (p1 === p2) {
+          message = `End match early? ${n1} ${p1} – ${p2} ${n2}. Scores are tied — no winner will be declared.`;
+        } else {
+          const leaderName = p1 > p2 ? n1 : n2;
+          message = `End match early? ${n1} ${p1} – ${p2} ${n2}. ${leaderName} will be declared winner.`;
         }
       }
-      return;
-    }
 
-    if (action === 'abandon-match') {
-      if (window.confirm('Abandon this match?')) {
+      if (window.confirm(message)) {
         try {
           if (_expandedCardId === matchId) _expandedCardId = null;
-          abandonMatch(matchId);
+          endMatchEarly(matchId);
           refreshActiveZone();
         } catch (err) {
-          console.error('abandonMatch error:', err);
+          console.error('endMatchEarly error:', err);
         }
       }
       return;

@@ -10,9 +10,10 @@ function playerName(players, playerId) {
   return players.find((p) => p.id === playerId)?.name ?? 'Unknown';
 }
 
-function matchStatusLabel(status) {
-  if (status === 'complete') return 'Complete';
-  if (status === 'abandoned') return 'Abandoned';
+function matchStatusLabel(match) {
+  if (match.endedEarly) return 'Ended Early';
+  if (match.status === 'complete') return 'Complete';
+  if (match.status === 'abandoned') return 'Abandoned';
   return 'Active';
 }
 
@@ -39,11 +40,17 @@ function gameItemHtml(game, players) {
 function matchGroupHtml(match, players) {
   const p1Name = escapeHtml(playerName(players, match.player1Id));
   const p2Name = escapeHtml(playerName(players, match.player2Id));
-  const status = matchStatusLabel(match.status);
+  const status = matchStatusLabel(match);
   const winnerName = match.winnerId ? escapeHtml(playerName(players, match.winnerId)) : null;
-  const winnerBadge = winnerName
-    ? `<span class="badge badge-winner">${winnerName} wins</span>`
-    : `<span class="badge badge-${match.status}">${status}</span>`;
+  let winnerBadge;
+  if (match.endedEarly) {
+    const label = winnerName ? `${winnerName} wins · Ended Early` : 'Ended Early';
+    winnerBadge = `<span class="badge badge-ended-early">${label}</span>`;
+  } else if (winnerName) {
+    winnerBadge = `<span class="badge badge-winner">${winnerName} wins</span>`;
+  } else {
+    winnerBadge = `<span class="badge badge-${match.status}">${status}</span>`;
+  }
 
   const gamesHtml =
     match.games.length === 0

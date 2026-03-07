@@ -141,3 +141,51 @@ describe('deriveMatchStandings', () => {
     expect(bobStanding.matchPoints).toBe(2);
   });
 });
+
+// ---------------------------------------------------------------------------
+// deriveMatchStandings — tied early-ended match (winnerId: null) — T002
+// ---------------------------------------------------------------------------
+
+describe('deriveMatchStandings — tied early-ended match (null winnerId)', () => {
+  it('gives neither player a win when winnerId is null on a complete match', () => {
+    const [alice, bob] = makePlayers(['Alice', 'Bob']);
+    const players = [alice, bob];
+    const match = makeMatch({
+      p1: alice.id, p2: bob.id, status: 'complete', winnerId: null,
+      games: [makeGame(alice.id, 2), makeGame(bob.id, 2)],
+    });
+    const standings = deriveMatchStandings(players, [match]);
+    const aliceStanding = standings.find((s) => s.name === 'Alice');
+    const bobStanding = standings.find((s) => s.name === 'Bob');
+    expect(aliceStanding.wins).toBe(0);
+    expect(bobStanding.wins).toBe(0);
+  });
+
+  it('gives neither player a loss when winnerId is null on a complete match', () => {
+    const [alice, bob] = makePlayers(['Alice', 'Bob']);
+    const players = [alice, bob];
+    const match = makeMatch({
+      p1: alice.id, p2: bob.id, status: 'complete', winnerId: null,
+      games: [makeGame(alice.id, 2), makeGame(bob.id, 2)],
+    });
+    const standings = deriveMatchStandings(players, [match]);
+    const aliceStanding = standings.find((s) => s.name === 'Alice');
+    const bobStanding = standings.find((s) => s.name === 'Bob');
+    expect(aliceStanding.losses).toBe(0);
+    expect(bobStanding.losses).toBe(0);
+  });
+
+  it('both players retain earned match points from a tied early-ended match', () => {
+    const [alice, bob] = makePlayers(['Alice', 'Bob']);
+    const players = [alice, bob];
+    const match = makeMatch({
+      p1: alice.id, p2: bob.id, status: 'complete', winnerId: null,
+      games: [makeGame(alice.id, 3), makeGame(bob.id, 2)],
+    });
+    const standings = deriveMatchStandings(players, [match]);
+    const aliceStanding = standings.find((s) => s.name === 'Alice');
+    const bobStanding = standings.find((s) => s.name === 'Bob');
+    expect(aliceStanding.matchPoints).toBe(3);
+    expect(bobStanding.matchPoints).toBe(2);
+  });
+});

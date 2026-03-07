@@ -46,6 +46,25 @@ export function isMatchComplete(match) {
 }
 
 /**
+ * Returns the playerId of the leader by accumulated match points, or null if tied.
+ * Used when ending a match early before the target score is reached.
+ *
+ * @param {object} match
+ * @returns {string|null}
+ */
+export function earlyMatchWinner(match) {
+  const p1Points = match.games
+    .filter((g) => g.winnerId === match.player1Id)
+    .reduce((sum, g) => sum + g.matchPoints, 0);
+  const p2Points = match.games
+    .filter((g) => g.winnerId === match.player2Id)
+    .reduce((sum, g) => sum + g.matchPoints, 0);
+  if (p1Points > p2Points) return match.player1Id;
+  if (p2Points > p1Points) return match.player2Id;
+  return null;
+}
+
+/**
  * Returns the playerId of the first player to reach targetScore, or null.
  *
  * @param {object} match

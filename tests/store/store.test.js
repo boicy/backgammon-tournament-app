@@ -991,3 +991,182 @@ describe('endTournament — match-based archiving', () => {
     expect(store.getState().matches).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// endMatchEarly — T005 (games path) + T013 (zero-games path)
+// ---------------------------------------------------------------------------
+
+describe('endMatchEarly', () => {
+  let alice, bob, matchId;
+
+  beforeEach(() => {
+    store.initTournament('End Early Test');
+    store.addPlayer('Alice');
+    store.addPlayer('Bob');
+    const { players } = store.getState();
+    alice = players.find((p) => p.name === 'Alice');
+    bob = players.find((p) => p.name === 'Bob');
+    store.startMatch(alice.id, bob.id, 5);
+    matchId = store.getState().matches[0].id;
+  });
+
+  // --- Error cases ---
+
+  it("throws 'Match not found' for unknown matchId", () => {
+    expect(() => store.endMatchEarly('unknown-id')).toThrow('Match not found');
+  });
+
+  it("throws 'Match is not active' for an already-abandoned match", () => {
+    store.abandonMatch(matchId);
+    expect(() => store.endMatchEarly(matchId)).toThrow('Match is not active');
+  });
+
+  it("throws 'Match is not active' for an already-complete match (natural completion)", () => {
+    // record 5 standard×1 games for alice to hit target
+    for (let i = 0; i < 5; i++) {
+      store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    }
+    expect(store.getState().matches[0].status).toBe('complete');
+    expect(() => store.endMatchEarly(matchId)).toThrow('Match is not active');
+  });
+
+  // --- Zero-games path (T013) ---
+
+  it('with zero games: sets status to abandoned', () => {
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].status).toBe('abandoned');
+  });
+
+  it('with zero games: winnerId is explicitly null', () => {
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].winnerId).toStrictEqual(null);
+  });
+
+  it('with zero games: does NOT set endedEarly', () => {
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].endedEarly).toBeFalsy();
+  });
+
+  it('with zero games: match does not contribute to standings', () => {
+    store.endMatchEarly(matchId);
+    const standings = store.getState().standings;
+    const aliceS = standings.find((s) => s.playerId === alice.id);
+    expect(aliceS.wins).toBe(0);
+    expect(aliceS.matchPoints).toBe(0);
+  });
+
+  // --- Games path: P1 leads (T005) ---
+
+  it('with games where P1 leads: sets status to complete', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].status).toBe('complete');
+  });
+
+  it('with games where P1 leads: sets endedEarly to true', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].endedEarly).toBe(true);
+  });
+
+  it('with games where P1 leads: sets winnerId to player1Id', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].winnerId).toBe(alice.id);
+  });
+
+  it('with games where P1 leads: sets completedAt to a truthy value', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].completedAt).toBeTruthy();
+  });
+
+  // --- Games path: P2 leads ---
+
+  it('with games where P2 leads: sets winnerId to player2Id', () => {
+    store.recordMatchGame(matchId, { winnerId: bob.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].winnerId).toBe(bob.id);
+  });
+
+  // --- Games path: tied ---
+
+  it('with games where scores are tied: sets status to complete', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: bob.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].status).toBe('complete');
+  });
+
+  it('with games where scores are tied: sets endedEarly to true', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: bob.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].endedEarly).toBe(true);
+  });
+
+  it('with games where scores are tied: sets winnerId to null', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: bob.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].winnerId).toStrictEqual(null);
+  });
+
+  it('with games where scores are tied: neither player gets a win or loss in standings', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.recordMatchGame(matchId, { winnerId: bob.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    const standings = store.getState().standings;
+    const aliceS = standings.find((s) => s.playerId === alice.id);
+    const bobS = standings.find((s) => s.playerId === bob.id);
+    expect(aliceS.wins).toBe(0);
+    expect(aliceS.losses).toBe(0);
+    expect(bobS.wins).toBe(0);
+    expect(bobS.losses).toBe(0);
+  });
+
+  it('with games where scores are tied: both players retain earned points in standings', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'gammon', cubeValue: 2 }); // 4 pts
+    store.recordMatchGame(matchId, { winnerId: bob.id, resultType: 'standard', cubeValue: 1 }); // 1 pt
+    store.endMatchEarly(matchId);
+    // Note: not actually tied by score but tests standings attribution
+    // Use a true tie: both 1 standard point
+    store.initTournament('End Early Test 2');
+    store.addPlayer('Alice2');
+    store.addPlayer('Bob2');
+    const { players } = store.getState();
+    const a2 = players.find((p) => p.name === 'Alice2');
+    const b2 = players.find((p) => p.name === 'Bob2');
+    store.startMatch(a2.id, b2.id, 5);
+    const mid2 = store.getState().matches[0].id;
+    store.recordMatchGame(mid2, { winnerId: a2.id, resultType: 'standard', cubeValue: 1 }); // 1pt
+    store.recordMatchGame(mid2, { winnerId: b2.id, resultType: 'standard', cubeValue: 1 }); // 1pt
+    store.endMatchEarly(mid2);
+    const standings2 = store.getState().standings;
+    const a2S = standings2.find((s) => s.playerId === a2.id);
+    const b2S = standings2.find((s) => s.playerId === b2.id);
+    expect(a2S.matchPoints).toBe(1);
+    expect(b2S.matchPoints).toBe(1);
+  });
+
+  // --- Events and persistence ---
+
+  it('emits state:matches:changed — verified via state update after endMatchEarly', () => {
+    store.endMatchEarly(matchId);
+    expect(store.getState().matches[0].status).toBe('abandoned');
+  });
+
+  it('emits state:standings:changed — verified via standings update after endMatchEarly', () => {
+    store.recordMatchGame(matchId, { winnerId: alice.id, resultType: 'standard', cubeValue: 1 });
+    store.endMatchEarly(matchId);
+    const standings = store.getState().standings;
+    const aliceS = standings.find((s) => s.playerId === alice.id);
+    expect(aliceS.wins).toBe(1);
+  });
+
+  it('persists to localStorage after endMatchEarly', () => {
+    localStorageMock.setItem.mockClear();
+    store.endMatchEarly(matchId);
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('backgammon:matches', expect.any(String));
+  });
+});

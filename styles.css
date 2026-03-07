@@ -1196,6 +1196,11 @@ select option {
   color: var(--color-complete);
 }
 
+.badge-ended-early {
+  background: var(--color-warning, #f59e0b);
+  color: #fff;
+}
+
 /* ===== Match Detail (003) ===== */
 .match-header {
   margin-bottom: var(--space-lg);

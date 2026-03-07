@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createMatch, isMatchComplete, matchWinner } from '../../src/models/match.js';
+import { createMatch, isMatchComplete, matchWinner, earlyMatchWinner } from '../../src/models/match.js';
 
 // ---------------------------------------------------------------------------
 // createMatch
@@ -161,5 +161,52 @@ describe('matchWinner', () => {
 
   it('returns null for a match with no games', () => {
     expect(matchWinner(makeMatch(5))).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// earlyMatchWinner — T004
+// ---------------------------------------------------------------------------
+
+describe('earlyMatchWinner', () => {
+  it('returns player1Id when P1 accumulated match points exceed P2', () => {
+    const match = {
+      player1Id: 'p1', player2Id: 'p2',
+      games: [
+        { winnerId: 'p1', matchPoints: 3 },
+        { winnerId: 'p2', matchPoints: 1 },
+      ],
+    };
+    expect(earlyMatchWinner(match)).toBe('p1');
+  });
+
+  it('returns player2Id when P2 accumulated match points exceed P1', () => {
+    const match = {
+      player1Id: 'p1', player2Id: 'p2',
+      games: [
+        { winnerId: 'p2', matchPoints: 3 },
+        { winnerId: 'p1', matchPoints: 1 },
+      ],
+    };
+    expect(earlyMatchWinner(match)).toBe('p2');
+  });
+
+  it('returns null when scores are tied (e.g., P1=2 P2=2)', () => {
+    const match = {
+      player1Id: 'p1', player2Id: 'p2',
+      games: [
+        { winnerId: 'p1', matchPoints: 2 },
+        { winnerId: 'p2', matchPoints: 2 },
+      ],
+    };
+    expect(earlyMatchWinner(match)).toBeNull();
+  });
+
+  it('returns null when no games recorded (0-0)', () => {
+    const match = {
+      player1Id: 'p1', player2Id: 'p2',
+      games: [],
+    };
+    expect(earlyMatchWinner(match)).toBeNull();
   });
 });
