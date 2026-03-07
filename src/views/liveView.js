@@ -17,6 +17,7 @@ let _pickStep = null;       // null | 1 | 2 | 'confirm'
 let _selectedP1 = null;     // player ID
 let _selectedP2 = null;     // player ID
 let _selectedTarget = 7;   // target score (reset to 7 on form close/render)
+let _selectedWinner = null; // player ID of selected game winner, or null
 let _container = null;
 
 // Event bus handlers stored for cleanup
@@ -62,14 +63,17 @@ function escapeHtml(str) {
 function gameFormHtml(match, players) {
   const p1 = players.find((p) => p.id === match.player1Id);
   const p2 = players.find((p) => p.id === match.player2Id);
+  const p1Cls = _selectedWinner === match.player1Id ? 'pick-btn pick-btn--selected' : 'pick-btn';
+  const p2Cls = _selectedWinner === match.player2Id ? 'pick-btn pick-btn--selected' : 'pick-btn';
+  // Initial render bakes _selectedWinner into button classes.
+  // Subsequent winner clicks update classes via direct DOM toggle (no re-render needed).
   return `
     <div class="live-card__form" data-game-form data-match-id="${escapeHtml(match.id)}">
-      <label class="live-form__label">Winner
-        <select class="live-form__select" data-game-winner>
-          <option value="${escapeHtml(match.player1Id)}">${escapeHtml(p1?.name ?? '?')}</option>
-          <option value="${escapeHtml(match.player2Id)}">${escapeHtml(p2?.name ?? '?')}</option>
-        </select>
-      </label>
+      <div class="pick-winner-grid">
+        <button class="${p1Cls}" type="button" data-action="pick-winner" data-winner-id="${escapeHtml(match.player1Id)}" data-match-id="${escapeHtml(match.id)}">${escapeHtml(p1?.name ?? '?')}</button>
+        <button class="${p2Cls}" type="button" data-action="pick-winner" data-winner-id="${escapeHtml(match.player2Id)}" data-match-id="${escapeHtml(match.id)}">${escapeHtml(p2?.name ?? '?')}</button>
+      </div>
+      <span data-game-error style="display:none;color:var(--color-danger,#ef4444);font-size:0.85rem;" aria-live="polite"></span>
       <label class="live-form__label">Result
         <select class="live-form__select" data-result-type>
           <option value="standard">Standard</option>
@@ -322,6 +326,7 @@ export function render(container) {
   _selectedP1 = null;
   _selectedP2 = null;
   _selectedTarget = 7;
+  _selectedWinner = null;
   container.innerHTML = viewHtml(getState());
 }
 
@@ -392,13 +397,17 @@ export function onMount(container) {
       }
 
       if (wasExpanded) {
+        // Closing form — reset winner selection
         _expandedCardId = null;
+        _selectedWinner = null;
         const formWrap = _container.querySelector(`[data-form-wrap="${matchId}"]`);
         if (formWrap) {
           formWrap.dataset.expanded = 'false';
           formWrap.innerHTML = '';
         }
       } else {
+        // Opening form — reset winner selection to clean state
+        _selectedWinner = null;
         _expandedCardId = matchId;
         const formWrap = _container.querySelector(`[data-form-wrap="${matchId}"]`);
         const { matches, players } = getState();
@@ -411,17 +420,45 @@ export function onMount(container) {
       return;
     }
 
+    if (action === 'pick-winner') {
+      const clickedId = target.dataset.winnerId;
+      // Toggle: clicking already-selected winner deselects; otherwise select
+      _selectedWinner = _selectedWinner === clickedId ? null : clickedId;
+      // Direct class toggle on existing DOM — no re-render needed
+      const card = target.closest('.live-card');
+      if (card) {
+        card.querySelectorAll('[data-action="pick-winner"]').forEach((btn) => {
+          if (btn.dataset.winnerId === _selectedWinner) {
+            btn.classList.add('pick-btn--selected');
+          } else {
+            btn.classList.remove('pick-btn--selected');
+          }
+        });
+        // Clear any existing error when a winner is picked/unpicked
+        const errEl = card.querySelector('[data-game-error]');
+        if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+      }
+      return;
+    }
+
     if (action === 'submit-game') {
-      const { matches, players } = getState();
-      const card = _container.querySelector(`[data-match-id="${matchId}"]`);
+      const card = _container.querySelector(`.live-card[data-match-id="${matchId}"]`);
       if (!card) return;
-      const winner = card.querySelector('[data-game-winner]')?.value;
+
+      // Validate: winner must be selected
+      if (!_selectedWinner) {
+        const errEl = card.querySelector('[data-game-error]');
+        if (errEl) { errEl.textContent = 'Please select a winner'; errEl.style.display = ''; }
+        return;
+      }
+
       const resultType = card.querySelector('[data-result-type]')?.value ?? 'standard';
       const cubeValue = parseInt(card.querySelector('[data-cube-value]')?.value ?? '1', 10);
-      if (!winner) return;
+      const winner = _selectedWinner;
       try {
         recordMatchGame(matchId, { winnerId: winner, resultType, cubeValue });
         _expandedCardId = null;
+        _selectedWinner = null;
         // Score pulse animation — refreshActiveZone re-renders so we apply after
         refreshActiveZone();
         // Mark updated score cells

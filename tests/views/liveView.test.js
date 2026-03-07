@@ -45,7 +45,7 @@ vi.mock('../../src/store/store.js', () => ({
 vi.mock('../../src/store/eventBus.js', () => ({ eventBus: mockEventBus }));
 vi.mock('../../src/router.js', () => ({ updateTournamentState: vi.fn() }));
 
-import { getState } from '../../src/store/store.js';
+import { getState, recordMatchGame } from '../../src/store/store.js';
 import * as view from '../../src/views/liveView.js';
 
 // ---------------------------------------------------------------------------
@@ -394,6 +394,126 @@ describe('liveView — new match form', () => {
 
     const noNumberInput = container.querySelector('input[data-start-target]');
     expect(noNumberInput).toBeNull();
+
+    cleanup(container);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3 / T004 (008-record-game-ux): winner pick buttons
+// ---------------------------------------------------------------------------
+
+describe('liveView — winner pick buttons', () => {
+  beforeEach(() => {
+    Object.keys(busHandlers).forEach((k) => delete busHandlers[k]);
+    vi.clearAllMocks();
+  });
+
+  function expandGameForm(container) {
+    container.querySelector('[data-action="record-game"]').click();
+    return container.querySelector('[data-game-form]');
+  }
+
+  it('expanded game form shows two pick-winner buttons, not a [data-game-winner] select', () => {
+    const container = makeContainer();
+    setState({
+      players: [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }],
+      matches: [makeMatch({ id: 'm1' })],
+    });
+    view.render(container);
+    view.onMount(container);
+
+    const form = expandGameForm(container);
+    expect(form).not.toBeNull();
+
+    const winnerBtns = form.querySelectorAll('[data-action="pick-winner"]');
+    expect(winnerBtns.length).toBe(2);
+    expect([...winnerBtns].map((b) => b.textContent)).toContain('Alice');
+    expect([...winnerBtns].map((b) => b.textContent)).toContain('Bob');
+
+    const oldSelect = form.querySelector('[data-game-winner]');
+    expect(oldSelect).toBeNull();
+
+    // result-type and cube-value selects still present (FR-009)
+    expect(form.querySelector('[data-result-type]')).not.toBeNull();
+    expect(form.querySelector('[data-cube-value]')).not.toBeNull();
+
+    cleanup(container);
+  });
+
+  it('tapping a winner button highlights it and clears the other', () => {
+    const container = makeContainer();
+    setState({
+      players: [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }],
+      matches: [makeMatch({ id: 'm1' })],
+    });
+    view.render(container);
+    view.onMount(container);
+    expandGameForm(container);
+
+    const [btnAlice, btnBob] = container.querySelectorAll('[data-action="pick-winner"]');
+    btnAlice.click();
+    expect(btnAlice.classList.contains('pick-btn--selected')).toBe(true);
+    expect(btnBob.classList.contains('pick-btn--selected')).toBe(false);
+
+    cleanup(container);
+  });
+
+  it('tapping the other winner button switches selection', () => {
+    const container = makeContainer();
+    setState({
+      players: [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }],
+      matches: [makeMatch({ id: 'm1' })],
+    });
+    view.render(container);
+    view.onMount(container);
+    expandGameForm(container);
+
+    const [btnAlice, btnBob] = container.querySelectorAll('[data-action="pick-winner"]');
+    btnAlice.click();
+    btnBob.click();
+    expect(btnBob.classList.contains('pick-btn--selected')).toBe(true);
+    expect(btnAlice.classList.contains('pick-btn--selected')).toBe(false);
+
+    cleanup(container);
+  });
+
+  it('tapping the already-selected button deselects it (toggle-off)', () => {
+    const container = makeContainer();
+    setState({
+      players: [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }],
+      matches: [makeMatch({ id: 'm1' })],
+    });
+    view.render(container);
+    view.onMount(container);
+    expandGameForm(container);
+
+    const [btnAlice, btnBob] = container.querySelectorAll('[data-action="pick-winner"]');
+    btnAlice.click(); // select
+    btnAlice.click(); // deselect
+    expect(btnAlice.classList.contains('pick-btn--selected')).toBe(false);
+    expect(btnBob.classList.contains('pick-btn--selected')).toBe(false);
+
+    cleanup(container);
+  });
+
+  it('submitting with no winner shows [data-game-error] and does NOT call recordMatchGame', () => {
+    const container = makeContainer();
+    setState({
+      players: [{ id: 'p1', name: 'Alice' }, { id: 'p2', name: 'Bob' }],
+      matches: [makeMatch({ id: 'm1' })],
+    });
+    view.render(container);
+    view.onMount(container);
+    expandGameForm(container);
+
+    // Do NOT pick a winner — tap submit immediately
+    container.querySelector('[data-action="submit-game"]').click();
+
+    const errorEl = container.querySelector('[data-game-error]');
+    expect(errorEl).not.toBeNull();
+    expect(errorEl.textContent).toBeTruthy();
+    expect(recordMatchGame).not.toHaveBeenCalled();
 
     cleanup(container);
   });

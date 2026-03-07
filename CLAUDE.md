@@ -13,6 +13,8 @@ Auto-generated from all feature plans. Last updated: 2026-03-04
 - No changes — players already in `localStorage` via `backgammon:players` (005-roster-visibility)
 - Vanilla JavaScript ES2022+ (native ES modules) + None (production). Vitest 3.x + Playwright (dev only) (006-tap-to-select)
 - No changes — `localStorage` keys unchanged (006-tap-to-select)
+- Vanilla JavaScript ES2022+ (native ES modules), HTML5, CSS3 + None (production); Vitest 3.x + Playwright (dev) (008-record-game-ux)
+- localStorage — no changes; `_selectedWinner` is ephemeral module-level state (008-record-game-ux)
 
 - HTML5 / CSS3 / Vanilla JavaScript (ES2022+) + None (production). Vitest 3.x (dev only, for TDD). (001-tournament-tracker)
 
@@ -46,9 +48,9 @@ index.html, styles.css, package.json, vitest.config.js
 - TDD: tests MUST be written and observed to fail before implementation
 
 ## Recent Changes
+- 008-record-game-ux: Added Vanilla JavaScript ES2022+ (native ES modules), HTML5, CSS3 + None (production); Vitest 3.x + Playwright (dev)
 - 007-tap-target-select: Added Vanilla JavaScript ES2022+ (native ES modules) + None (production). Vitest 3.x + Playwright (dev only)
 - 006-tap-to-select: Added Vanilla JavaScript ES2022+ (native ES modules) + None (production). Vitest 3.x + Playwright (dev only)
-- 005-roster-visibility: Added Vanilla JavaScript ES2022+ + None (production)
 
 
 <!-- MANUAL ADDITIONS START -->
