@@ -1,7 +1,7 @@
 import { createTournament } from '../models/tournament.js';
 import { createPlayer, validatePlayerName } from '../models/player.js';
 import { createGame } from '../models/game.js';
-import { createMatch, isMatchComplete, matchWinner } from '../models/match.js';
+import { createMatch, isMatchComplete, matchWinner, earlyMatchWinner } from '../models/match.js';
 import { deriveMatchStandings } from '../models/matchStanding.js';
 import { generateSchedule } from '../models/roundRobin.js';
 import { createSnapshot } from '../models/tournamentSnapshot.js';
@@ -243,6 +243,36 @@ export function abandonMatch(matchId) {
   if (match.status !== 'active') throw new Error('Match is not active');
 
   const updatedMatch = { ...match, status: 'abandoned' };
+  state.matches = [
+    ...state.matches.slice(0, matchIndex),
+    updatedMatch,
+    ...state.matches.slice(matchIndex + 1),
+  ];
+  persist(KEYS.matches, state.matches);
+  eventBus.emit('state:matches:changed', { matches: state.matches });
+  eventBus.emit('state:standings:changed', { standings: deriveMatchStandings(state.players, state.matches) });
+}
+
+export function endMatchEarly(matchId) {
+  const matchIndex = state.matches.findIndex((m) => m.id === matchId);
+  if (matchIndex === -1) throw new Error('Match not found');
+
+  const match = state.matches[matchIndex];
+  if (match.status !== 'active') throw new Error('Match is not active');
+
+  let updatedMatch;
+  if (match.games.length === 0) {
+    updatedMatch = { ...match, status: 'abandoned', winnerId: null };
+  } else {
+    updatedMatch = {
+      ...match,
+      status: 'complete',
+      endedEarly: true,
+      winnerId: earlyMatchWinner(match),
+      completedAt: Date.now(),
+    };
+  }
+
   state.matches = [
     ...state.matches.slice(0, matchIndex),
     updatedMatch,

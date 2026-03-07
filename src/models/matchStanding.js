@@ -19,7 +19,7 @@ export function deriveMatchStandings(players, matches) {
   const stats = players.map((player) => {
     const wins = completed.filter((m) => m.winnerId === player.id).length;
     const losses = completed.filter(
-      (m) => (m.player1Id === player.id || m.player2Id === player.id) && m.winnerId !== player.id,
+      (m) => (m.player1Id === player.id || m.player2Id === player.id) && m.winnerId !== player.id && m.winnerId !== null,
     ).length;
     const matchPoints = completed.reduce((sum, m) => {
       return sum + m.games
