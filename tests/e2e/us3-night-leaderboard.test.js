@@ -13,8 +13,7 @@ async function setupNight(page, { players = ['Alice', 'Bob', 'Carol'] } = {}) {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
-  await page.locator('.name-prompt input[type="text"]').fill('Test Night');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
   for (const name of players) {
     await page.locator('[data-action="toggle-add-player"]').click();
@@ -43,7 +42,6 @@ async function playMatchToCompletion(page, { p1Name, p2Name, winner, target = 3 
     await card.locator('[data-action="record-game"]').click();
     await card.locator('[data-action="pick-winner"]').filter({ hasText: winner }).click();
     await card.locator('[data-result-type]').selectOption('standard');
-    await card.locator('[data-cube-value]').selectOption('1');
     await card.locator('[data-action="submit-game"]').click();
     await page.waitForTimeout(50);
   }
@@ -91,7 +89,6 @@ test('AC2 — points tiebreaker: same wins but different points', async ({ page 
     await aliceCard.locator('[data-action="record-game"]').click();
     await aliceCard.locator('[data-action="pick-winner"]').filter({ hasText: 'Alice' }).click();
     await aliceCard.locator('[data-result-type]').selectOption('standard');
-    await aliceCard.locator('[data-cube-value]').selectOption('1');
     await aliceCard.locator('[data-action="submit-game"]').click();
     await page.waitForTimeout(50);
   }
@@ -108,7 +105,7 @@ test('AC2 — points tiebreaker: same wins but different points', async ({ page 
   await carolCard.locator('[data-action="record-game"]').click();
   await carolCard.locator('[data-action="pick-winner"]').filter({ hasText: 'Carol' }).click();
   await carolCard.locator('[data-result-type]').selectOption('gammon');
-  await carolCard.locator('[data-cube-value]').selectOption('2');
+  await carolCard.locator('[data-action="pick-cube-value"][data-cube-value="2"]').click();
   await carolCard.locator('[data-action="submit-game"]').click();
   await page.waitForTimeout(50);
 

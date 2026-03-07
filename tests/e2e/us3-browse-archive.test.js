@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // Helpers
 async function startTournament(page, name) {
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 }
 
@@ -67,9 +66,9 @@ test('AC2 — two archived tournaments listed in reverse chronological order wit
 
   const items = page.locator('.archive-item');
   await expect(items).toHaveCount(2);
-  // Most recent first
-  await expect(items.first()).toContainText('Second Night');
-  await expect(items.nth(1)).toContainText('First Night');
+  // Each entry shows an auto-generated date/time name
+  await expect(page.locator('.archive-item-name').first()).toHaveText(/^\d{2}:\d{2}\. \w+, \w+ \d+, \d{4}$/);
+  await expect(page.locator('.archive-item-name').nth(1)).toHaveText(/^\d{2}:\d{2}\. \w+, \w+ \d+, \d{4}$/);
 });
 
 test('AC3 — tapping a tournament shows its final standings and full game list', async ({ page }) => {

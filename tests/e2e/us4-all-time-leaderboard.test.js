@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function startTournament(page, name) {
   await expect(page.locator('.name-prompt')).toBeVisible();
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 }
 
@@ -26,7 +25,7 @@ async function recordGame(page, winnerName, loserName) {
   const card = page.locator('.live-card--active').first();
   await card.locator('[data-action="record-game"]').click();
   await card.locator('[data-action="pick-winner"]').filter({ hasText: winnerName }).click();
-  await card.locator('[data-cube-value]').selectOption('4');
+  await card.locator('[data-action="pick-cube-value"][data-cube-value="4"]').click();
   await card.locator('[data-action="submit-game"]').click();
   await page.waitForTimeout(50);
 }

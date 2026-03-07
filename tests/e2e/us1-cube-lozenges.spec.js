@@ -17,8 +17,7 @@ async function setupTournament(page, players = ['Alice', 'Bob']) {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
-  await page.locator('.name-prompt input[type="text"]').fill('Cube Test');
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
   for (const name of players) {
     await page.locator('[data-action="toggle-add-player"]').click();
@@ -116,7 +115,7 @@ test('S4: submitting with cube value "2" and gammon records 4 match points', asy
   await card.locator('[data-action="pick-cube-value"][data-cube-value="2"]').click();
 
   // Select gammon result type
-  await card.locator('[data-result-type="gammon"]').click();
+  await card.locator('[data-result-type]').selectOption('gammon');
 
   // Pick Alice as winner
   await card.locator('[data-action="pick-winner"]').filter({ hasText: 'Alice' }).click();

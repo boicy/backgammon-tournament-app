@@ -30,8 +30,7 @@ async function setupTournament(page, { name = 'Cancel Test', players = [] } = {}
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
   for (const playerName of players) {
     await page.locator('[data-action="toggle-add-player"]').click();

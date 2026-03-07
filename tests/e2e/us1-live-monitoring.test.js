@@ -20,8 +20,7 @@ async function setupTournament(page, { name = 'Club Night', players = [] } = {})
   await page.goto('/');
 
   // Fill tournament name and start
-  await page.locator('.name-prompt input[type="text"]').fill(name);
-  await page.locator('.name-prompt button[type="submit"]').click();
+  await page.locator('#start-tournament-btn').click();
   await expect(page.locator('.view--live')).toBeVisible();
 
   // Add players via collapsible add-player form

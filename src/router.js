@@ -119,7 +119,7 @@ function initHamburgerMenu() {
         closeMenu();
         if (window.confirm('Reset the tournament? All data will be deleted.')) {
           resetTournament();
-          window.location.hash = '#/start';
+          window.location.hash = '#/live';
         }
         return;
       }

@@ -5,6 +5,7 @@ import { createMatch, isMatchComplete, matchWinner, earlyMatchWinner } from '../
 import { deriveMatchStandings } from '../models/matchStanding.js';
 import { generateSchedule } from '../models/roundRobin.js';
 import { createSnapshot } from '../models/tournamentSnapshot.js';
+import { generateTournamentName } from '../utils.js';
 import { eventBus } from './eventBus.js';
 
 const KEYS = {
@@ -117,10 +118,8 @@ function _archiveCurrentTournament() {
 // Actions
 // ---------------------------------------------------------------------------
 
-export function initTournament(name) {
-  const trimmed = (name ?? '').trim();
-  if (!trimmed) throw new Error('Tournament name is required');
-  if (trimmed.length > 100) throw new Error('Tournament name too long');
+export function initTournament() {
+  const name = generateTournamentName();
 
   // Auto-archive current tournament if it has players AND matches
   if (state.tournament !== null && state.players.length >= 1 && state.matches.length >= 1) {
@@ -128,7 +127,7 @@ export function initTournament(name) {
     eventBus.emit('state:archive:changed');
   }
 
-  const tournament = createTournament(trimmed);
+  const tournament = createTournament(name);
   state = { ...state, tournament, players: [], matches: [], selectedMatchId: null, schedule: null };
   persistAll();
   eventBus.emit('state:reset');
@@ -307,8 +306,8 @@ export function endTournament() {
 }
 
 export function resetTournament() {
-  state = { ...state, tournament: null, players: [], matches: [], selectedMatchId: null, schedule: null };
-  localStorage.removeItem(KEYS.tournament);
+  state = { ...state, players: [], matches: [], selectedMatchId: null, schedule: null };
+  persist(KEYS.tournament, state.tournament);
   localStorage.removeItem(KEYS.players);
   localStorage.removeItem(KEYS.matches);
   eventBus.emit('state:reset');
