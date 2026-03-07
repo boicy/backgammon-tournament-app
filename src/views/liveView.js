@@ -233,6 +233,7 @@ function newMatchFormHtml(players, matches = []) {
           <form id="start-match-form" class="pick-start-form">
             <div class="pick-target-grid">${targetButtonsHtml}</div>
             <button class="btn btn-primary btn-full" type="submit">Start</button>
+            <button class="btn btn-secondary btn-sm" type="button" data-action="cancel-new-match">Cancel</button>
             <div data-match-error class="live-error" aria-live="polite"></div>
           </form>
         </div>
@@ -244,7 +245,7 @@ function newMatchFormHtml(players, matches = []) {
     const isSelected = p.id === _selectedP1;
     const cls = isSelected ? 'pick-btn pick-btn--selected' : 'pick-btn';
     const action = isSelected ? 'deselect-player' : 'pick-player';
-    const disabled = isSelected && _pickStep === 2 ? ' disabled' : '';
+    const disabled = '';
     const activeCount = matches.filter(
       (m) => m.status === 'active' && (m.player1Id === p.id || m.player2Id === p.id),
     ).length;
@@ -260,6 +261,7 @@ function newMatchFormHtml(players, matches = []) {
       <div class="pick-panel">
         <p class="pick-prompt">${prompt}</p>
         <div class="pick-grid">${buttonsHtml}</div>
+        <button class="btn btn-secondary btn-sm" type="button" data-action="cancel-new-match">Cancel</button>
       </div>
     </div>`;
 }
@@ -555,16 +557,25 @@ export function onMount(container) {
     }
 
     if (action === 'deselect-player') {
-      if (_pickStep === 'confirm') {
-        if (playerId === _selectedP2) {
-          _selectedP2 = null;
-          _pickStep = 2;
-        } else if (playerId === _selectedP1) {
-          _selectedP1 = _selectedP2;
-          _selectedP2 = null;
-          _pickStep = _selectedP1 ? 2 : 1;
-        }
+      if (_pickStep === 2) {
+        _selectedP1 = null;
+        _pickStep = 1;
+      } else if (_pickStep === 'confirm') {
+        _selectedP1 = null;
+        _selectedP2 = null;
+        _selectedTarget = 7;
+        _pickStep = 1;
       }
+      refreshNewMatchForm();
+      return;
+    }
+
+    if (action === 'cancel-new-match') {
+      _pickStep = null;
+      _selectedP1 = null;
+      _selectedP2 = null;
+      _selectedTarget = 7;
+      _newMatchExpanded = false;
       refreshNewMatchForm();
       return;
     }

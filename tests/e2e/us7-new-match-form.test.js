@@ -44,10 +44,12 @@ test('AC1 — tapping + New Match shows player pick grid', async ({ page }) => {
   await expect(page.locator('.pick-prompt')).toContainText('Pick Player 1');
   await expect(page.locator('[data-action="pick-player"]')).toHaveCount(2);
 
-  // Pick Alice — her button should become disabled (can't pick same player twice)
+  // Pick Alice — her button becomes a deselect affordance (she cannot be picked as P2)
   await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
   await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
-  await expect(page.locator('[data-player-id]').filter({ hasText: 'Alice' })).toBeDisabled();
+  const aliceBtn = page.locator('[data-action="deselect-player"]').filter({ hasText: 'Alice' });
+  await expect(aliceBtn).toBeVisible();
+  await expect(aliceBtn).not.toBeDisabled();
 });
 
 test('AC2 — confirmation step shows target grid with 7 pre-selected', async ({ page }) => {
@@ -125,7 +127,7 @@ test('AC5 — reopening form resets target selection to 7', async ({ page }) => 
   await expect(page.locator('[data-action="pick-target"]').filter({ hasText: /^13$/ })).not.toHaveClass(/pick-btn--selected/);
 });
 
-test('AC6 — tapping selected pill deselects and returns to previous step', async ({ page }) => {
+test('AC6 — tapping selected pill deselects and resets to step 1', async ({ page }) => {
   await createTournament(page);
   await addPlayer(page, 'Alice');
   await addPlayer(page, 'Bob');
@@ -136,17 +138,20 @@ test('AC6 — tapping selected pill deselects and returns to previous step', asy
   await page.locator('[data-action="pick-player"]').filter({ hasText: 'Bob' }).click();
   await expect(page.locator('.pick-confirm')).toBeVisible();
 
-  // Deselect Bob (P2 pill) → back to Pick Player 2
+  // Deselect Bob (P2 pill) → back to step 1, both players cleared
   await page.locator('[data-action="deselect-player"]').filter({ hasText: 'Bob' }).click();
-  await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
+  await expect(page.locator('.pick-prompt')).toContainText('Pick Player 1');
   await expect(page.locator('.pick-confirm')).not.toBeVisible();
+  await expect(page.locator('.pick-btn--selected')).not.toBeVisible();
 
-  // Pick Carol as P2 → confirm step with Alice vs Carol
+  // Pick Alice + Carol → confirm step
+  await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
   await page.locator('[data-action="pick-player"]').filter({ hasText: 'Carol' }).click();
   await expect(page.locator('.pick-confirm')).toBeVisible();
 
-  // Deselect Alice (P1 pill at confirm) → Carol becomes P1, back to Pick Player 2
+  // Deselect Alice (P1 pill at confirm) → back to step 1, both cleared
   await page.locator('[data-action="deselect-player"]').filter({ hasText: 'Alice' }).click();
-  await expect(page.locator('.pick-prompt')).toContainText('Pick Player 2');
-  await expect(page.locator('[data-player-id]').filter({ hasText: 'Carol' })).toBeDisabled();
+  await expect(page.locator('.pick-prompt')).toContainText('Pick Player 1');
+  await expect(page.locator('.pick-confirm')).not.toBeVisible();
+  await expect(page.locator('.pick-btn--selected')).not.toBeVisible();
 });
