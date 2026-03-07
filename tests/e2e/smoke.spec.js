@@ -134,10 +134,13 @@ test.describe('Match Mode', () => {
     await expect(page.locator('.live-card--active')).toContainText('Bob');
   });
 
-  test('same player cannot be picked twice — button becomes disabled', async ({ page }) => {
+  test('same player cannot be picked twice — selected button becomes deselect affordance', async ({ page }) => {
     await page.locator('[data-action="toggle-new-match"]').click();
     await page.locator('[data-action="pick-player"]').filter({ hasText: 'Alice' }).click();
-    await expect(page.locator('[data-player-id]').filter({ hasText: 'Alice' })).toBeDisabled();
+    // Alice's button becomes a clickable deselect affordance (she cannot be picked as P2)
+    const aliceBtn = page.locator('[data-action="deselect-player"]').filter({ hasText: 'Alice' });
+    await expect(aliceBtn).toBeVisible();
+    await expect(aliceBtn).not.toBeDisabled();
     // Collapse form to reset
     await page.locator('[data-action="toggle-new-match"]').click();
   });
